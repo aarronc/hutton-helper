@@ -1,2 +1,2 @@
 # hutton-helper
-Data collection tool to aid in better management of the BGS
+A plugin for the Elite Dangerous Market Connector, specifically written for the Hutton Orbital Truckers.
