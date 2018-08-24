@@ -11,6 +11,7 @@ import requests
 import zlib
 import re
 import webbrowser
+import textwrap
 
 this = sys.modules[__name__]
 this.msg = ""
@@ -168,7 +169,11 @@ def news_update():
 		news_data = response.json()
 		#sys.stderr.write("got news!'{HDLN}' and link '{LNK}'\n".format(HDLN=news_data['headline'], LNK=news_data['link']))
 		if (response.status_code == 200):
-			this.news_headline['text'] = news_data['headline']
+			if len(news_data['headline']) > 30:
+				this.news_headline['text'] = textwrap.fill(news_data['headline'], 30)
+			else:
+				this.news_headline['text'] = news_data['headline']
+			
 			this.news_headline['url'] = news_data['link']
 		else:
 			this.news_headline['text'] = "News refresh Failed"
