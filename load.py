@@ -233,7 +233,7 @@ def plugin_app(parent):
 
    this.status = tk.Label(this.frame, anchor=tk.W, text=label_string)
    this.news_label = tk.Label(this.frame, anchor=tk.W, text="News:")
-   this.news_headline = HyperlinkLabel(this.frame, text="", url="", underline=True, wraplength=200)
+   this.news_headline = HyperlinkLabel(this.frame, text="", url="", underline=True)
    this.daily_button = tk.Button(this.inside_frame, text="Daily Update", command=daily_info_call)
    this.influence_button = tk.Button(this.inside_frame, text="Influence", command=influence_data_call)
    this.stats_button = tk.Button(this.inside_frame, text="Stats", command=lambda: OpenUrl(STATS_URL))
