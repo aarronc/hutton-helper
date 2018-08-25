@@ -11,10 +11,11 @@ import requests
 import zlib
 import re
 import webbrowser
+import textwrap
 
 this = sys.modules[__name__]
 this.msg = ""
-
+shownav_val = 1
 RADIO_URL = "https://radio.forthemug.com/"
 STATS_URL = "https://hot.forthemug.com/stats.php"
 
@@ -65,7 +66,11 @@ def plugin_prefs(parent):
         nb.Label(frame).grid()	# spacer
         nb.Button(frame, text="UPGRADE", command=upgrade_callback).grid(columnspan=2, padx=PADX, sticky=tk.W)
     else:
-        nb.Label(frame, text="Fly Safe!").grid(columnspan=2, padx=PADX, sticky=tk.W)
+	nb.Label(frame, text="Fly Safe!").grid(columnspan=2, padx=PADX, sticky=tk.W)
+	nb.Label(frame).grid() # Spacer
+	nb.Label(frame, text="Exploration Options :-").grid(columnspan=2, padx=PADX, sticky=tk.W)
+	nb.Radiobutton(frame, text="Show Exploration Credits on Hutton Helper Display", command = lambda:shownav(shownav_val)).grid(columnspan=2, padx=PADX, sticky=tk.W)
+	nb.Radiobutton(frame, text="Hide Exploration Credits on Hutton Helper Display", command = lambda:hidenav(shownav_val)).grid(columnspan=2, padx=PADX, sticky=tk.W)
     return frame
 
 def fetch_remote_version():
@@ -160,7 +165,7 @@ def OpenUrl(UrlToOpen):
 
 def news_update():
 	
-	this.parent.after(300000,news_update)
+	this.parent.after(15000,news_update)
 	
 	try:
 		url = "http://hot.forthemug.com:4567/news.json/"
@@ -168,7 +173,11 @@ def news_update():
 		news_data = response.json()
 		#sys.stderr.write("got news!'{HDLN}' and link '{LNK}'\n".format(HDLN=news_data['headline'], LNK=news_data['link']))
 		if (response.status_code == 200):
-			this.news_headline['text'] = news_data['headline']
+			if len(news_data['headline']) > 30:
+				this.news_headline['text'] = textwrap.fill(news_data['headline'], 30)
+			else:
+				this.news_headline['text'] = news_data['headline']
+			
 			this.news_headline['url'] = news_data['link']
 		else:
 			this.news_headline['text'] = "News refresh Failed"
@@ -201,36 +210,28 @@ def daily_info_call():
 	except:
 		tkMessageBox.showinfo("Hutton Daily update", "Did not Receive response from HH Server")
 		
-def stats_call():
-	try:
-		url = "http://hot.forthemug.com:4567/cmdr_stats.json/{}".format(cmdr)
-		response = requests.get(url)
-		daily_data = response.json()
-		#sys.stderr.write("got news!'{HDLN}' and link '{LNK}'\n".format(HDLN=news_data['headline'], LNK=news_data['link']))
-		if (response.status_code == 200):
-			tkMessageBox.showinfo("Hutton Helper Stats", "\n".join(daily_data))
-		else:
-			tkMessageBox.showinfo("Hutton Helper Stats", "Could not get Daily Stats Data")
-	except:
-		tkMessageBox.showinfo("Hutton Helper Stats", "Did not Receive response from HH Server")
-	# Something i was playing around with and could'nt get to work
-	#if cmdr is None:
-	#	return tkMessageBox.showinfo("Stats Information", "Load up your game so we know who to get stats for Commander!")
-	#else:
-	#	return tkMessageBox.showinfo("Stats Information", "Hello {cmdr} this is a placeholder until i can finish it")
+def hidenav(shownav_val):
+	this.exploration_label.grid_forget()
+	this.exploration_status.grid_forget()
 
+def shownav(shownav_val):
+	this.exploration_status['text'] = "Woohoo! im back"
+	this.exploration_label.grid(row = 2,column = 0, sticky = tk.W)
+	this.exploration_status.grid(row = 2,column = 1, sticky = tk.W)
+	
 def plugin_app(parent):
 
    this.parent = parent
    this.frame = tk.Frame(parent)
    this.inside_frame = tk.Frame(this.frame)
+   this.exploration_frame = tk.Frame(this.frame)
    this.inside_frame.columnconfigure(4, weight=1)
+   this.exploration_frame.columnconfigure(2, weight=1)
    label_string = plugin_status_text()
    
 
    this.frame.columnconfigure(2, weight=1)
    this.label = HyperlinkLabel(this.frame, text='Helper:', url='https://hot.forthemug.com/', underline=False)
-
    this.status = tk.Label(this.frame, anchor=tk.W, text=label_string)
    this.news_label = tk.Label(this.frame, anchor=tk.W, text="News:")
    this.news_headline = HyperlinkLabel(this.frame, text="", url="", underline=True)
@@ -238,6 +239,8 @@ def plugin_app(parent):
    this.influence_button = tk.Button(this.inside_frame, text="Influence", command=influence_data_call)
    this.stats_button = tk.Button(this.inside_frame, text="Stats", command=lambda: OpenUrl(STATS_URL))
    this.radio_button = tk.Button(this.inside_frame, text="Radio", command=lambda: OpenUrl(RADIO_URL))
+   this.exploration_label = tk.Label(this.inside_frame, text="Explo Credits:")
+   this.exploration_status = tk.Label(this.inside_frame, text = "1,825,425 credits")
    this.spacer = tk.Label(this.frame)
    this.label.grid(row = 0, column = 0, sticky=tk.W)
    this.status.grid(row = 0, column = 1, sticky=tk.W)
@@ -245,11 +248,12 @@ def plugin_app(parent):
    this.news_headline.grid(row = 1, column = 1, sticky=tk.W)
    this.inside_frame.grid(row = 3,column = 0, columnspan= 2,sticky=tk.W)
    #this.spacer.grid(row = 2, column = 0,sticky=tk.W)
-   this.daily_button.grid(row = 0, column = 0, sticky =tk.W)
-   this.influence_button.grid(row = 0, column = 1, sticky =tk.W, padx = 5,pady= 10)
-   this.stats_button.grid(row = 0, column = 2, sticky =tk.W)
-   this.radio_button.grid(row = 0, column = 3, sticky =tk.W,padx = 5)
-
+   this.daily_button.grid(row = 3, column = 0, sticky =tk.W)
+   this.influence_button.grid(row = 3 , column = 1, sticky =tk.W, padx = 5,pady= 10)
+   this.stats_button.grid(row = 3, column = 2, sticky =tk.W)
+   this.radio_button.grid(row = 3, column = 3, sticky =tk.W,padx = 5)
+   this.exploration_label.grid(row = 2,column = 0, sticky = tk.W)
+   this.exploration_status.grid(row = 2,column = 1,columnspan= 3, sticky = tk.W)
    news_update()
    
    return this.frame
@@ -614,7 +618,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
             headers = {'content-type': 'application/octet-stream','content-encoding': 'zlib'}
             response = requests.post(url_transmit_explo_start, data=transmit_json, headers=headers, timeout=7)
 
-        if "exploration reset" in entry['Message']:
+        if "reset exploration data" in entry['Message']:
             this.status['text'] = "Resetting your Exploration 2.0 Data"
             url_transmit_explo_reset = 'http://forthemug.com:4567/exploreset'
             headers = {'content-type': 'application/octet-stream','content-encoding': 'zlib'}
