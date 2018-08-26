@@ -5,6 +5,7 @@ import Tkinter as tk
 import tkMessageBox
 from ttkHyperlinkLabel import HyperlinkLabel
 from config import applongname, appversion
+from config import config
 import myNotebook as nb
 import json
 import requests
@@ -12,10 +13,11 @@ import zlib
 import re
 import webbrowser
 import textwrap
+import time
 
 this = sys.modules[__name__]
 this.msg = ""
-shownav_val = 1
+
 RADIO_URL = "https://radio.forthemug.com/"
 STATS_URL = "https://hot.forthemug.com/stats.php"
 
@@ -44,6 +46,7 @@ def plugin_prefs(parent):
     Invoked whenever a user opens the preferences pane
     Must return a TK Frame for adding to the EDMC settings dialog.
     """
+    this.ShowExploVal = tk.IntVar(value=config.getint("ShowExploValue"))
     # sys.stderr.write("plugin_prefs\n")
     PADX = 10 # formatting
 
@@ -69,10 +72,17 @@ def plugin_prefs(parent):
 	nb.Label(frame, text="Fly Safe!").grid(columnspan=2, padx=PADX, sticky=tk.W)
 	nb.Label(frame).grid() # Spacer
 	nb.Label(frame, text="Exploration Options :-").grid(columnspan=2, padx=PADX, sticky=tk.W)
-	nb.Radiobutton(frame, text="Show Exploration Credits on Hutton Helper Display", command = lambda:shownav(shownav_val)).grid(columnspan=2, padx=PADX, sticky=tk.W)
-	nb.Radiobutton(frame, text="Hide Exploration Credits on Hutton Helper Display", command = lambda:hidenav(shownav_val)).grid(columnspan=2, padx=PADX, sticky=tk.W)
+	nb.Checkbutton(frame, text="Show Exploration Credits on Hutton Helper Display", variable=this.ShowExploVal).grid(columnspan=2, padx=PADX, sticky=tk.W)
+	
     return frame
-
+	
+def prefs_changed(cmdr, is_beta):
+   """
+   Save settings.
+   """
+   config.set('ShowExploValue', this.ShowExploVal.get())
+   explo_showhide(this.ShowExploVal.get())
+   
 def fetch_remote_version():
     try:
         response = requests.get(REMOTE_VERSION_URL, timeout=0.5)
@@ -210,15 +220,22 @@ def daily_info_call():
 	except:
 		tkMessageBox.showinfo("Hutton Daily update", "Did not Receive response from HH Server")
 		
-def hidenav(shownav_val):
-	this.exploration_label.grid_forget()
-	this.exploration_status.grid_forget()
+def explo_showhide(ShowHide):
+	if ShowHide == 0: 
+		this.exploration_label.grid_forget()
+		this.exploration_status.grid_forget()
+	else:
+		this.exploration_status['text'] = "Woohoo! im back"
+		this.exploration_label.grid(row = 2,column = 0, sticky = tk.W)
+		this.exploration_status.grid(row = 2,column = 1, columnspan= 2,sticky = tk.W)
 
-def shownav(shownav_val):
-	this.exploration_status['text'] = "Woohoo! im back"
-	this.exploration_label.grid(row = 2,column = 0, sticky = tk.W)
-	this.exploration_status.grid(row = 2,column = 1, sticky = tk.W)
-	
+def explo_credits(cmdr):
+	credit_url = "http://forthemug.com:4567/explocredit.json/{}".format(cmdr)
+	response = requests.get(credit_url)
+	json_data = response.json()
+	this.exploration_status['text'] = "{:,.0f} credits".format(float(json_data['ExploCredits']))
+		
+		
 def plugin_app(parent):
 
    this.parent = parent
@@ -240,7 +257,7 @@ def plugin_app(parent):
    this.stats_button = tk.Button(this.inside_frame, text="Stats", command=lambda: OpenUrl(STATS_URL))
    this.radio_button = tk.Button(this.inside_frame, text="Radio", command=lambda: OpenUrl(RADIO_URL))
    this.exploration_label = tk.Label(this.inside_frame, text="Explo Credits:")
-   this.exploration_status = tk.Label(this.inside_frame, text = "1,825,425 credits")
+   this.exploration_status = tk.Label(this.inside_frame, text = "")
    this.spacer = tk.Label(this.frame)
    this.label.grid(row = 0, column = 0, sticky=tk.W)
    this.status.grid(row = 0, column = 1, sticky=tk.W)
@@ -253,8 +270,9 @@ def plugin_app(parent):
    this.stats_button.grid(row = 3, column = 2, sticky =tk.W)
    this.radio_button.grid(row = 3, column = 3, sticky =tk.W,padx = 5)
    this.exploration_label.grid(row = 2,column = 0, sticky = tk.W)
-   this.exploration_status.grid(row = 2,column = 1,columnspan= 3, sticky = tk.W)
+   this.exploration_status.grid(row = 2,column = 1,columnspan= 2, sticky = tk.W)
    news_update()
+   
    
    return this.frame
    
@@ -278,6 +296,10 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
     # transmit_json = json.dumps(entry)
     if is_beta:
         pass
+		
+    elif entry['event'] == 'StartUp':
+		explo_credits(cmdr)
+		
     elif entry['event'] == 'FSDJump':
         url_jump = 'http://forthemug.com:4567/fsdjump'
         headers = {'content-type': 'application/octet-stream','content-encoding': 'zlib'}
@@ -521,6 +543,8 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
         url_transmit_scan = 'http://forthemug.com:4567/scan'
         headers = {'content-type': 'application/octet-stream','content-encoding': 'zlib'}
         response = requests.post(url_transmit_scan, data=transmit_json, headers=headers, timeout=7)
+        #sleep(0.2)
+        explo_credits(cmdr)
 
     elif entry['event'] == 'MissionRedirected':
         this.status['text'] = "Mission Update Received"
@@ -898,6 +922,8 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
 						this.msg = 'CG Post Failed'
 				except:
 					this.msg = 'CG Post Exception'
+	
+	
 
 
 def cmdr_data(data, is_beta):
@@ -906,6 +932,7 @@ def cmdr_data(data, is_beta):
     :param data:
     :return:
     """
+    explo_credits(data.get('commander').get('name'))
     if not is_beta:
         cmdr_data.last = data
         #this.status['text'] = "Got new data ({} chars)".format(len(str(data)))
