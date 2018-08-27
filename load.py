@@ -647,6 +647,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
             url_transmit_explo_reset = 'http://forthemug.com:4567/exploreset'
             headers = {'content-type': 'application/octet-stream','content-encoding': 'zlib'}
             response = requests.post(url_transmit_explo_reset, data=transmit_json, headers=headers, timeout=7)
+            explo_credits(cmdr)
 
         if "inf reload" in entry['Message']:
             this.status['text'] = "Developer Mode : inf reload command sent"
