@@ -81,7 +81,7 @@ def prefs_changed(cmdr, is_beta):
    Save settings.
    """
    config.set('ShowExploValue', this.ShowExploVal.get())
-   explo_showhide(this.ShowExploVal.get())
+   display_update()
    
 def fetch_remote_version():
     try:
@@ -220,8 +220,8 @@ def daily_info_call():
 	except:
 		tkMessageBox.showinfo("Hutton Daily update", "Did not Receive response from HH Server")
 		
-def explo_showhide(ShowHide):
-	if ShowHide == 0: 
+def display_update():
+	if config.getint("ShowExploValue") == 0: 
 		this.exploration_label.grid_forget()
 		this.exploration_status.grid_forget()
 	else:
@@ -272,7 +272,7 @@ def plugin_app(parent):
    this.exploration_label.grid(row = 2,column = 0, sticky = tk.W)
    this.exploration_status.grid(row = 2,column = 1,columnspan= 2, sticky = tk.W)
    news_update()
-   
+   display_update()   
    
    return this.frame
    
