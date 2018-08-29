@@ -23,9 +23,9 @@ STATS_URL = "https://hot.forthemug.com/stats.php"
 
 
 
-HH_VERSION="1.8.2"
-REMOTE_VERSION_URL="http://hot.forthemug.com/live_plugin_version.txt"
-REMOTE_PLUGIN_FILE_URL="http://hot.forthemug.com/live_hutton_helper.py"
+HH_VERSION="1.8.4"
+REMOTE_VERSION_URL="http://hot.forthemug.com/beta_plugin_version.txt"
+REMOTE_PLUGIN_FILE_URL="http://hot.forthemug.com/beta_hutton_helper.py"
 
 this.remote_version = None
 this.upgrade_required = None # None for unknown, True for required, False for not
@@ -225,9 +225,9 @@ def display_update():
 		this.exploration_label.grid_forget()
 		this.exploration_status.grid_forget()
 	else:
-		this.exploration_status['text'] = "Woohoo! im back"
+		this.exploration_status['text'] = "<Scan object to update>"
 		this.exploration_label.grid(row = 2,column = 0, sticky = tk.W)
-		this.exploration_status.grid(row = 2,column = 1, columnspan= 2,sticky = tk.W)
+		this.exploration_status.grid(row = 2,column = 1, columnspan= 3,sticky = tk.W)
 
 def explo_credits(cmdr):
 	credit_url = "http://forthemug.com:4567/explocredit.json/{}".format(cmdr)
