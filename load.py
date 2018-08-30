@@ -5,6 +5,7 @@ import Tkinter as tk
 import tkMessageBox
 from ttkHyperlinkLabel import HyperlinkLabel
 from config import applongname, appversion
+from config import config
 import myNotebook as nb
 import json
 import requests
@@ -12,6 +13,7 @@ import zlib
 import re
 import webbrowser
 import textwrap
+import time
 
 this = sys.modules[__name__]
 this.msg = ""
@@ -21,9 +23,9 @@ STATS_URL = "https://hot.forthemug.com/stats.php"
 
 
 
-HH_VERSION="1.8.2"
-REMOTE_VERSION_URL="http://hot.forthemug.com/live_plugin_version.txt"
-REMOTE_PLUGIN_FILE_URL="http://hot.forthemug.com/live_hutton_helper.py"
+HH_VERSION="1.8.4"
+REMOTE_VERSION_URL="http://hot.forthemug.com/beta_plugin_version.txt"
+REMOTE_PLUGIN_FILE_URL="http://hot.forthemug.com/beta_hutton_helper.py"
 
 this.remote_version = None
 this.upgrade_required = None # None for unknown, True for required, False for not
@@ -44,6 +46,7 @@ def plugin_prefs(parent):
     Invoked whenever a user opens the preferences pane
     Must return a TK Frame for adding to the EDMC settings dialog.
     """
+    this.ShowExploVal = tk.IntVar(value=config.getint("ShowExploValue"))
     # sys.stderr.write("plugin_prefs\n")
     PADX = 10 # formatting
 
@@ -66,8 +69,19 @@ def plugin_prefs(parent):
         nb.Label(frame).grid()	# spacer
         nb.Button(frame, text="UPGRADE", command=upgrade_callback).grid(columnspan=2, padx=PADX, sticky=tk.W)
     else:
-        nb.Label(frame, text="Fly Safe!").grid(columnspan=2, padx=PADX, sticky=tk.W)
+	nb.Label(frame, text="Fly Safe!").grid(columnspan=2, padx=PADX, sticky=tk.W)
+	nb.Label(frame).grid() # Spacer
+	nb.Label(frame, text="Exploration Options :-").grid(columnspan=2, padx=PADX, sticky=tk.W)
+	nb.Checkbutton(frame, text="Show Exploration Credits on Hutton Helper Display", variable=this.ShowExploVal).grid(columnspan=2, padx=PADX, sticky=tk.W)
+
     return frame
+
+def prefs_changed(cmdr, is_beta):
+   """
+   Save settings.
+   """
+   config.set('ShowExploValue', this.ShowExploVal.get())
+   display_update()
 
 def fetch_remote_version():
     try:
@@ -160,25 +174,23 @@ def OpenUrl(UrlToOpen):
     webbrowser.open_new(UrlToOpen)
 
 def news_update():
+	this.parent.after(300000,news_update)
+	try:
+		url = "http://hot.forthemug.com:4567/news.json/"
+		response = requests.get(url)
+		news_data = response.json()
+		#sys.stderr.write("got news!'{HDLN}' and link '{LNK}'\n".format(HDLN=news_data['headline'], LNK=news_data['link']))
+		if (response.status_code == 200):
+			if len(news_data['headline']) > 30:
+				this.news_headline['text'] = textwrap.fill(news_data['headline'], 30)
+			else:
+				this.news_headline['text'] = news_data['headline']
 
-    this.parent.after(300000,news_update)
-
-    try:
-        url = "http://hot.forthemug.com:4567/news.json/"
-        response = requests.get(url)
-        news_data = response.json()
-        #sys.stderr.write("got news!'{HDLN}' and link '{LNK}'\n".format(HDLN=news_data['headline'], LNK=news_data['link']))
-        if (response.status_code == 200):
-            if len(news_data['headline']) > 30:
-                this.news_headline['text'] = textwrap.fill(news_data['headline'], 30)
-            else:
-                this.news_headline['text'] = news_data['headline']
-
-            this.news_headline['url'] = news_data['link']
-        else:
-            this.news_headline['text'] = "News refresh Failed"
-    except:
-        this.news_headline['text'] = "Could not update news from HH server"
+			this.news_headline['url'] = news_data['link']
+		else:
+			this.news_headline['text'] = "News refresh Failed"
+	except:
+		this.news_headline['text'] = "Could not update news from HH server"
 
 def influence_data_call():
     try:
@@ -194,48 +206,46 @@ def influence_data_call():
         tkMessageBox.showinfo("Hutton Influence Data", "Did not Receive response from HH Server")
 
 def daily_info_call():
-    try:
-        url = "http://hot.forthemug.com:4567/msgbox_daily_update.json"
-        response = requests.get(url)
-        daily_data = response.json()
-        #sys.stderr.write("got news!'{HDLN}' and link '{LNK}'\n".format(HDLN=news_data['headline'], LNK=news_data['link']))
-        if (response.status_code == 200):
-            tkMessageBox.showinfo("Hutton Daily update", "\n".join(daily_data))
-        else:
-            tkMessageBox.showinfo("Hutton Daily update", "Could not get Daily Update Data")
-    except:
-        tkMessageBox.showinfo("Hutton Daily update", "Did not Receive response from HH Server")
+	try:
+		url = "http://hot.forthemug.com:4567/msgbox_daily_update.json"
+		response = requests.get(url)
+		daily_data = response.json()
+		#sys.stderr.write("got news!'{HDLN}' and link '{LNK}'\n".format(HDLN=news_data['headline'], LNK=news_data['link']))
+		if (response.status_code == 200):
+			tkMessageBox.showinfo("Hutton Daily update", "\n".join(daily_data))
+		else:
+			tkMessageBox.showinfo("Hutton Daily update", "Could not get Daily Update Data")
+	except:
+		tkMessageBox.showinfo("Hutton Daily update", "Did not Receive response from HH Server")
 
-def stats_call():
-    try:
-        url = "http://hot.forthemug.com:4567/cmdr_stats.json/{}".format(cmdr)
-        response = requests.get(url)
-        daily_data = response.json()
-        #sys.stderr.write("got news!'{HDLN}' and link '{LNK}'\n".format(HDLN=news_data['headline'], LNK=news_data['link']))
-        if (response.status_code == 200):
-            tkMessageBox.showinfo("Hutton Helper Stats", "\n".join(daily_data))
-        else:
-            tkMessageBox.showinfo("Hutton Helper Stats", "Could not get Daily Stats Data")
-    except:
-        tkMessageBox.showinfo("Hutton Helper Stats", "Did not Receive response from HH Server")
-    # Something i was playing around with and could'nt get to work
-    #if cmdr is None:
-    #	return tkMessageBox.showinfo("Stats Information", "Load up your game so we know who to get stats for Commander!")
-    #else:
-    #	return tkMessageBox.showinfo("Stats Information", "Hello {cmdr} this is a placeholder until i can finish it")
+def display_update():
+	if config.getint("ShowExploValue") == 0:
+		this.exploration_label.grid_forget()
+		this.exploration_status.grid_forget()
+	else:
+		this.exploration_status['text'] = "<Scan object to update>"
+		this.exploration_label.grid(row = 2,column = 0, sticky = tk.W)
+		this.exploration_status.grid(row = 2,column = 1, columnspan= 3,sticky = tk.W)
+
+def explo_credits(cmdr):
+	credit_url = "http://forthemug.com:4567/explocredit.json/{}".format(cmdr)
+	response = requests.get(credit_url)
+	json_data = response.json()
+	this.exploration_status['text'] = "{:,.0f} credits".format(float(json_data['ExploCredits']))
 
 def plugin_app(parent):
 
    this.parent = parent
    this.frame = tk.Frame(parent)
    this.inside_frame = tk.Frame(this.frame)
+   this.exploration_frame = tk.Frame(this.frame)
    this.inside_frame.columnconfigure(4, weight=1)
+   this.exploration_frame.columnconfigure(2, weight=1)
    label_string = plugin_status_text()
 
 
    this.frame.columnconfigure(2, weight=1)
    this.label = HyperlinkLabel(this.frame, text='Helper:', url='https://hot.forthemug.com/', underline=False)
-
    this.status = tk.Label(this.frame, anchor=tk.W, text=label_string)
    this.news_label = tk.Label(this.frame, anchor=tk.W, text="News:")
    this.news_headline = HyperlinkLabel(this.frame, text="", url="", underline=True)
@@ -243,6 +253,8 @@ def plugin_app(parent):
    this.influence_button = tk.Button(this.inside_frame, text="Influence", command=influence_data_call)
    this.stats_button = tk.Button(this.inside_frame, text="Stats", command=lambda: OpenUrl(STATS_URL))
    this.radio_button = tk.Button(this.inside_frame, text="Radio", command=lambda: OpenUrl(RADIO_URL))
+   this.exploration_label = tk.Label(this.inside_frame, text="Explo Credits:")
+   this.exploration_status = tk.Label(this.inside_frame, text = "")
    this.spacer = tk.Label(this.frame)
    this.label.grid(row = 0, column = 0, sticky=tk.W)
    this.status.grid(row = 0, column = 1, sticky=tk.W)
@@ -250,12 +262,14 @@ def plugin_app(parent):
    this.news_headline.grid(row = 1, column = 1, sticky=tk.W)
    this.inside_frame.grid(row = 3,column = 0, columnspan= 2,sticky=tk.W)
    #this.spacer.grid(row = 2, column = 0,sticky=tk.W)
-   this.daily_button.grid(row = 0, column = 0, sticky =tk.W)
-   this.influence_button.grid(row = 0, column = 1, sticky =tk.W, padx = 5,pady= 10)
-   this.stats_button.grid(row = 0, column = 2, sticky =tk.W)
-   this.radio_button.grid(row = 0, column = 3, sticky =tk.W,padx = 5)
-
+   this.daily_button.grid(row = 3, column = 0, sticky =tk.W)
+   this.influence_button.grid(row = 3 , column = 1, sticky =tk.W, padx = 5,pady= 10)
+   this.stats_button.grid(row = 3, column = 2, sticky =tk.W)
+   this.radio_button.grid(row = 3, column = 3, sticky =tk.W,padx = 5)
+   this.exploration_label.grid(row = 2,column = 0, sticky = tk.W)
+   this.exploration_status.grid(row = 2,column = 1,columnspan= 2, sticky = tk.W)
    news_update()
+   display_update()
 
    return this.frame
 
@@ -279,6 +293,10 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
     # transmit_json = json.dumps(entry)
     if is_beta:
         pass
+
+    elif entry['event'] == 'StartUp':
+		explo_credits(cmdr)
+
     elif entry['event'] == 'FSDJump':
         url_jump = 'http://forthemug.com:4567/fsdjump'
         headers = {'content-type': 'application/octet-stream','content-encoding': 'zlib'}
@@ -522,6 +540,8 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
         url_transmit_scan = 'http://forthemug.com:4567/scan'
         headers = {'content-type': 'application/octet-stream','content-encoding': 'zlib'}
         response = requests.post(url_transmit_scan, data=transmit_json, headers=headers, timeout=7)
+        #sleep(0.2)
+        explo_credits(cmdr)
 
     elif entry['event'] == 'MissionRedirected':
         this.status['text'] = "Mission Update Received"
@@ -619,11 +639,12 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
             headers = {'content-type': 'application/octet-stream','content-encoding': 'zlib'}
             response = requests.post(url_transmit_explo_start, data=transmit_json, headers=headers, timeout=7)
 
-        if "exploration reset" in entry['Message']:
+        if "reset exploration data" in entry['Message']:
             this.status['text'] = "Resetting your Exploration 2.0 Data"
             url_transmit_explo_reset = 'http://forthemug.com:4567/exploreset'
             headers = {'content-type': 'application/octet-stream','content-encoding': 'zlib'}
             response = requests.post(url_transmit_explo_reset, data=transmit_json, headers=headers, timeout=7)
+            explo_credits(cmdr)
 
         if "inf reload" in entry['Message']:
             this.status['text'] = "Developer Mode : inf reload command sent"
@@ -857,49 +878,46 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
             if json_data['online'] == "false":
                 this.status['text'] = "There is no LIVE DJ at the moment... please try again later"
 
+	if entry['event'] == 'CommunityGoal':
+		#print ('CG updating')
+		for goal in entry['CurrentGoals']:
 
-
-    if entry['event'] == 'CommunityGoal':
-        #print ('CG updating')
-        for goal in entry['CurrentGoals']:
-
-            if not goal['IsComplete']: #v0.2Collect Active CG only
-                """
-                First Extract CG Data
-                """
-                communitygoalID = goal['CGID']
-                communitygoalName = goal['Title']
-                contributionsTotal= goal['CurrentTotal']
-                contributorsNum = goal['NumContributors']
-                contribution = goal['PlayerContribution']
-                percentileBand = goal['PlayerPercentileBand']
-                #print ('CG Variables Calculated')
-                """
-                Build the Data Set to Submit, based on the Entry field number from the form.
-                """
-                form_data = {
-                    'entry.1465819909' : communitygoalID,
-                    'entry.2023048714' : communitygoalName,
-                    'entry.617265888' : contributionsTotal,
-                    'entry.1469183421' : contributorsNum,
-                    'entry.2011125544' : contribution,
-                    'entry.1759162752' : percentileBand
-                    }
-                url = "https://docs.google.com/forms/d/e/1FAIpQLScJHvd9MNKMMNGpjZtlcT74u6Wnhcgesqz38a8JWBC94Se2Dg/formResponse"
-                """
-                Request URl as a POST with the Form URL plus send the Form Data to each entry.
-                """
-                try:
-                    r = requests.post(url, data=form_data)
-                    if r.status_code == 200:
-                        #print ('URL Success')
-                        this.msg = 'CG Post Success'
-                    else:
-                        #print ('URL Fail' + str(r.status_code))
-                        this.msg = 'CG Post Failed'
-                except:
-                    this.msg = 'CG Post Exception'
-
+			if not goal['IsComplete']: #v0.2Collect Active CG only
+				"""
+  			 	First Extract CG Data
+ 				"""
+   				communitygoalID = goal['CGID']
+				communitygoalName = goal['Title']
+        			contributionsTotal= goal['CurrentTotal']
+        			contributorsNum = goal['NumContributors']
+        			contribution = goal['PlayerContribution']
+        			percentileBand = goal['PlayerPercentileBand']
+				#print ('CG Variables Calculated')
+				"""
+  				 Build the Data Set to Submit, based on the Entry field number from the form.
+ 				"""
+				form_data = {
+					'entry.1465819909' : communitygoalID,
+					'entry.2023048714' : communitygoalName,
+        				'entry.617265888' : contributionsTotal,
+       					'entry.1469183421' : contributorsNum,
+        				'entry.2011125544' : contribution,
+        				'entry.1759162752' : percentileBand
+        				}
+				url = "https://docs.google.com/forms/d/e/1FAIpQLScJHvd9MNKMMNGpjZtlcT74u6Wnhcgesqz38a8JWBC94Se2Dg/formResponse"
+				"""
+  			 	Request URl as a POST with the Form URL plus send the Form Data to each entry.
+ 				"""
+				try:
+					r = requests.post(url, data=form_data)
+    					if r.status_code == 200:
+        					#print ('URL Success')
+						this.msg = 'CG Post Success'
+    					else:
+						#print ('URL Fail' + str(r.status_code))
+						this.msg = 'CG Post Failed'
+				except:
+					this.msg = 'CG Post Exception'
 
 def cmdr_data(data, is_beta):
     """
@@ -907,6 +925,7 @@ def cmdr_data(data, is_beta):
     :param data:
     :return:
     """
+    explo_credits(data.get('commander').get('name'))
     if not is_beta:
         cmdr_data.last = data
         #this.status['text'] = "Got new data ({} chars)".format(len(str(data)))
@@ -919,5 +938,4 @@ def cmdr_data(data, is_beta):
         cmdr_data.last = None
 
 def plugin_stop():
-    print "Farewell cruel world!"
-
+print "Farewell cruel world!"
