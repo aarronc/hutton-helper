@@ -40,7 +40,7 @@ def plugin_start():
     # sys.stderr.write("plugin_start\n")	# appears in %TMP%/EDMarketConnector.log in packaged Windows app
     fetch_remote_version() # Fetch remote version information early
     return 'Hutton Helper'
-	
+
 def plugin_prefs(parent):
     """
     Invoked whenever a user opens the preferences pane
@@ -73,16 +73,16 @@ def plugin_prefs(parent):
 	nb.Label(frame).grid() # Spacer
 	nb.Label(frame, text="Exploration Options :-").grid(columnspan=2, padx=PADX, sticky=tk.W)
 	nb.Checkbutton(frame, text="Show Exploration Credits on Hutton Helper Display", variable=this.ShowExploVal).grid(columnspan=2, padx=PADX, sticky=tk.W)
-	
+
     return frame
-	
+
 def prefs_changed(cmdr, is_beta):
    """
    Save settings.
    """
    config.set('ShowExploValue', this.ShowExploVal.get())
    display_update()
-   
+
 def fetch_remote_version():
     try:
         response = requests.get(REMOTE_VERSION_URL, timeout=0.5)
@@ -169,14 +169,14 @@ def plugin_status_text():
 
 def versiontuple(v):
     return tuple(map(int, (v.split("."))))
-	
+
 def OpenUrl(UrlToOpen):
     webbrowser.open_new(UrlToOpen)
 
 def news_update():
-	
-	this.parent.after(15000,news_update)
-	
+
+	this.parent.after(300000,news_update)
+
 	try:
 		url = "http://hot.forthemug.com:4567/news.json/"
 		response = requests.get(url)
@@ -187,7 +187,7 @@ def news_update():
 				this.news_headline['text'] = textwrap.fill(news_data['headline'], 30)
 			else:
 				this.news_headline['text'] = news_data['headline']
-			
+
 			this.news_headline['url'] = news_data['link']
 		else:
 			this.news_headline['text'] = "News refresh Failed"
@@ -219,9 +219,9 @@ def daily_info_call():
 			tkMessageBox.showinfo("Hutton Daily update", "Could not get Daily Update Data")
 	except:
 		tkMessageBox.showinfo("Hutton Daily update", "Did not Receive response from HH Server")
-		
+
 def display_update():
-	if config.getint("ShowExploValue") == 0: 
+	if config.getint("ShowExploValue") == 0:
 		this.exploration_label.grid_forget()
 		this.exploration_status.grid_forget()
 	else:
@@ -234,8 +234,8 @@ def explo_credits(cmdr):
 	response = requests.get(credit_url)
 	json_data = response.json()
 	this.exploration_status['text'] = "{:,.0f} credits".format(float(json_data['ExploCredits']))
-		
-		
+
+
 def plugin_app(parent):
 
    this.parent = parent
@@ -245,7 +245,7 @@ def plugin_app(parent):
    this.inside_frame.columnconfigure(4, weight=1)
    this.exploration_frame.columnconfigure(2, weight=1)
    label_string = plugin_status_text()
-   
+
 
    this.frame.columnconfigure(2, weight=1)
    this.label = HyperlinkLabel(this.frame, text='Helper:', url='https://hot.forthemug.com/', underline=False)
@@ -272,10 +272,10 @@ def plugin_app(parent):
    this.exploration_label.grid(row = 2,column = 0, sticky = tk.W)
    this.exploration_status.grid(row = 2,column = 1,columnspan= 2, sticky = tk.W)
    news_update()
-   display_update()   
-   
+   display_update()
+
    return this.frame
-   
+
 def journal_entry(cmdr, is_beta, system, station, entry, state):
     """
     E:D client made a journal entry
@@ -296,10 +296,10 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
     # transmit_json = json.dumps(entry)
     if is_beta:
         pass
-		
+
     elif entry['event'] == 'StartUp':
 		explo_credits(cmdr)
-		
+
     elif entry['event'] == 'FSDJump':
         url_jump = 'http://forthemug.com:4567/fsdjump'
         headers = {'content-type': 'application/octet-stream','content-encoding': 'zlib'}
@@ -563,7 +563,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
         url_transmit_promo = 'http://forthemug.com:4567/cmdrpromotion'
         headers = {'content-type': 'application/octet-stream','content-encoding': 'zlib'}
         response = requests.post(url_transmit_promo, data=transmit_json, headers=headers, timeout=7)
-		
+
     elif entry['event'] == 'Cargo':
         url_transmit_cargo = 'http://forthemug.com:4567/cargo'
         headers = {'content-type': 'application/octet-stream','content-encoding': 'zlib'}
@@ -660,25 +660,25 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
             url_transmit_dev_allow_reload = 'http://forthemug.com:4567/devallowreload'
             headers = {'content-type': 'application/octet-stream','content-encoding': 'zlib'}
             response = requests.post(url_transmit_dev_allow_reload, data=transmit_json, headers=headers, timeout=7)
-			
+
         if "black ops add" in entry['Message']:
             this.status['text'] = "Admin Mode : Black Ops Faction Added"
             url_transmit_dev_blops_add = 'http://forthemug.com:4567/blopsadd'
             headers = {'content-type': 'application/octet-stream','content-encoding': 'zlib'}
             response = requests.post(url_transmit_dev_blops_add, data=transmit_json, headers=headers, timeout=7)
-			
+
         if "black ops active" in entry['Message']:
             this.status['text'] = "Black ops Mode : Enjoy Being Naughty Commander"
             blops_add = 'http://forthemug.com:4567/silentrunning'
             headers = {'content-type': 'application/octet-stream','content-encoding': 'zlib'}
             response = requests.post(blops_add, data=transmit_json, headers=headers, timeout=7)
-			
+
         if "black ops reset" in entry['Message']:
             this.status['text'] = "Black ops Mode : Welcome back Commander"
             blops_remove = 'http://forthemug.com:4567/normalrunning'
             headers = {'content-type': 'application/octet-stream','content-encoding': 'zlib'}
             response = requests.post(blops_remove, data=transmit_json, headers=headers, timeout=7)
-			
+
         if "auth list reload" in entry['Message']:
             this.status['text'] = "Admin Mode : Reloading Auth List"
             url_transmit_dev_auth_reload = 'http://forthemug.com:4567/authlistreload'
@@ -880,9 +880,9 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
                 response = requests.post(url_transmit_shoutout, data=transmit_json, headers=headers, timeout=7)
             if json_data['online'] == "false":
                 this.status['text'] = "There is no LIVE DJ at the moment... please try again later"
-            
-                
-            
+
+
+
 	if entry['event'] == 'CommunityGoal':
 		#print ('CG updating')
 		for goal in entry['CurrentGoals']:
@@ -923,8 +923,8 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
 						this.msg = 'CG Post Failed'
 				except:
 					this.msg = 'CG Post Exception'
-	
-	
+
+
 
 
 def cmdr_data(data, is_beta):
@@ -944,7 +944,6 @@ def cmdr_data(data, is_beta):
         headers = {'content-type': 'application/octet-stream','content-encoding': 'zlib'}
         response = requests.post(url_transmit_dock, data=transmit_json, headers=headers, timeout=7)
         cmdr_data.last = None
-		
+
 def plugin_stop():
 	print "Farewell cruel world!"
-	
