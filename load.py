@@ -109,7 +109,7 @@ def upgrade_callback():
         return
 
     this_fullpath = os.path.realpath(__file__)
-    this_filepath,this_extension = os.path.splitext(this_fullpath)
+    this_filepath, _ext = os.path.splitext(this_fullpath)
     corrected_fullpath = this_filepath + ".py" # Somehow we might need this to stop it hitting the pyo file?
 
     # sys.stderr.write("path is %s\n" % this_filepath)
@@ -915,7 +915,7 @@ def cmdr_data(data, is_beta):
         transmit_json = zlib.compress(data2)
         url_transmit_dock = 'http://forthemug.com:4567/docked'
         headers = {'content-type': 'application/octet-stream','content-encoding': 'zlib'}
-        response = requests.post(url_transmit_dock, data=transmit_json, headers=headers, timeout=7)
+        _response = requests.post(url_transmit_dock, data=transmit_json, headers=headers, timeout=7)
         cmdr_data.last = None
 
 def plugin_stop():
