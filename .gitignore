@@ -1,2 +1,8 @@
-*.pyc
+.env
 .vscode
+*.pyc
+Include
+Lib
+pip-selfcheck.json
+Scripts
+tcl
