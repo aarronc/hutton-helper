@@ -1,4 +1,4 @@
-[MASTER]
+6[MASTER]
 
 # A comma-separated list of package or module names from where C extensions may
 # be loaded. Extensions are loading into the active Python interpreter and may
@@ -260,7 +260,8 @@ method-naming-style=snake_case
 #method-rgx=
 
 # Naming style matching correct module names
-module-naming-style=snake_case
+#module-naming-style=snake_case
+module-naming-style=any
 
 # Regular expression matching correct module names. Overrides module-naming-
 # style

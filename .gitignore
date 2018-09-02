@@ -2,8 +2,11 @@
 .vscode
 *.pyc
 *.pyo
+*.zip
+hutton.ini
 Include
 Lib
 pip-selfcheck.json
 Scripts
 tcl
+version.json

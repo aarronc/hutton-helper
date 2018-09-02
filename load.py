@@ -1,341 +1,301 @@
 "The Hutton Helper. For the Mug!"
 
-import sys
-import os
-import json
-import zlib
-import Tkinter as tk
-import webbrowser
-import textwrap
+from __init__ import __version__ as HH_VERSION
 
-import requests
+import json
+import os
+import sys
+import textwrap
+import Tkinter as tk
+import traceback
+import ttk
+import zlib
+import tkFont
+
 from ttkHyperlinkLabel import HyperlinkLabel
 from config import config # applongname, appversion
 import myNotebook as nb
 import tkMessageBox
 
-this = sys.modules[__name__] # pylint: disable=C0103
+import requests # still here for CG code
+
+# Internal plugins and utilities:
+import cover
+import exploration
+import news
+import plugin as plugin_module
+import progress
+import toolbar
+import updater
+import xmit
+
+this = sys.modules[__name__]  # pylint: disable=C0103
 this.msg = ""
 
-RADIO_URL = "https://radio.forthemug.com/"
-STATS_URL = "https://hot.forthemug.com/stats.php"
 
+def PANIC(description=None):
+    "Handle failure."
 
-HH_VERSION = "1.8.4"
-REMOTE_VERSION_URL = "http://hot.forthemug.com/beta_plugin_version.txt"
-REMOTE_PLUGIN_FILE_URL = "http://hot.forthemug.com/beta_hutton_helper.py"
-
-this.remote_version = None
-this.upgrade_required = None  # None for unknown, True for required, False for not
-this.network_error_str = "" # Contains human readable network error log
-this.upgrade_applied = False
+    sys.stderr.write("PANIC: {}\r\n".format(description or ''))
+    exc_type, exc_value, exc_traceback = sys.exc_info()
+    traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stderr)
 
 
 def plugin_start():
-    """
-    Invoked when EDMC has just loaded the plug-in
-    :return: Plug-in name
-    """
-    # sys.stderr.write("plugin_start\n")  # appears in %TMP%/EDMarketConnector.log in packaged Windows app
-    fetch_remote_version()  # Fetch remote version information early
+    "Initialise the Hutton Helper plugin."
+
+    this.helper = plugin_module.HuttonHelperHelper(config, _refresh)
+    this.updater = updater.UpdatePlugin(this.helper)  # get a reference only if you need one
+    this.plugins = [
+        # A list of plugins to which we pass events.
+        this.updater,
+        progress.ProgressPlugin(this.helper),
+        exploration.ExplorationPlugin(this.helper)
+    ]
+
+    for plugin in plugins:
+        try:
+            plugin.plugin_start()
+        except:
+            PANIC("{}.plugin_start".format(plugin))
+
     return 'Hutton Helper'
 
 
-def plugin_prefs(parent):
-    """
-    Invoked whenever a user opens the preferences pane
-    Must return a TK Frame for adding to the EDMC settings dialog.
-    """
-    this.ShowExploVal = tk.IntVar(value=config.getint("ShowExploValue"))
-    # sys.stderr.write("plugin_prefs\n")
-    padx = 10 # formatting
+def plugin_app(parent):
+    "Called once to get the plugin widget. Return a ``tk.Frame``."
 
-    # We need to make another check, as we failed in plugin_start()
-    if this.upgrade_required is None:
-        fetch_remote_version()
+    padx, pady = 10, 5  # formatting
+    sticky = tk.EW + tk.N  # full width, stuck to the top
+    anchor = tk.NW
 
-    frame = nb.Frame(parent)
-    frame.columnconfigure(1, weight=1)
+    frame = this.frame = tk.Frame(parent)
+    frame.columnconfigure(0, weight=1)
+
+    table = tk.Frame(frame)
+    table.columnconfigure(1, weight=1)
+    table.grid(sticky=sticky)
 
     HyperlinkLabel(
-        frame,
-        text='Hutton Helper website',
-        background=nb.Label().cget('background'),
+        table,
+        text='Helper:',
         url='https://hot.forthemug.com/',
-        underline=True
-    ).grid(columnspan=2, padx=padx, sticky=tk.W)  # Don't translate
+        underline=False,
+        anchor=anchor,
+    ).grid(row=0, column=0, sticky=sticky)
+    this.status = tk.Label(table, anchor=anchor, text=str(this.updater))
+    this.status.grid(row=0, column=1, sticky=sticky)
 
-    nb.Label(frame).grid()  # spacer
-    if this.upgrade_required is None:
-        nb.Label(frame, text="Attempt to query for a new plug-in version failed:").grid(columnspan=2, padx=padx, sticky=tk.W)
-        nb.Label(frame, text=this.network_error_str, fg="red").grid(columnspan=2, padx=padx, sticky=tk.W)
-    elif this.upgrade_required:
-        nb.Label(frame, text="Upgrade required! Hit the button below and restart EDMC").grid(columnspan=2, padx=padx, sticky=tk.W)
-        nb.Label(frame).grid()  # spacer
-        nb.Button(frame, text="UPGRADE", command=upgrade_callback).grid(columnspan=2, padx=padx, sticky=tk.W)
-    else:
-        nb.Label(frame, text="Fly Safe!").grid(columnspan=2, padx=padx, sticky=tk.W)
-        nb.Label(frame).grid()  # Spacer
-        nb.Label(frame, text="Exploration Options :-").grid(columnspan=2, padx=padx, sticky=tk.W)
-        nb.Checkbutton(
-            frame,
-            text="Show Exploration Credits on Hutton Helper Display",
-            variable=this.ShowExploVal
-        ).grid(columnspan=2, padx=padx, sticky=tk.W)
+    tk.Label(table, anchor=anchor, text="News:").grid(row=1, column=0, sticky=sticky)
+    news.HuttonNews(table).grid(row=1, column=1, sticky=sticky)
+
+    this.plugin_rows = {}
+    this.plugin_frames = {}
+    row = 1 # because the table is first
+
+    # Add the plugins' widgets
+    for plugin in this.plugins:
+        try:
+            plugin_frame = plugin.plugin_app(frame)
+        except:
+            PANIC("{}.plugin_app".format(plugin))
+            continue
+
+        if plugin_frame:
+            this.plugin_rows[plugin] = row
+            this.plugin_frames[plugin] = plugin_frame
+            row = row + 1
+
+    # Add the front cover
+    this.front_cover_row = row
+    this.front_cover = cover.FrontCover(frame)
+    row = row + 1
+
+    # Configure the grid for everything above
+    _refresh()
+
+    # Add the toolbar
+    toolbar.HuttonToolbar(frame).grid(row=row, pady=pady, sticky=sticky)
 
     return frame
 
 
-def prefs_changed(_cmdr, _is_beta):
-    """
-    Save settings.
-    """
-    config.set('ShowExploValue', this.ShowExploVal.get())
-    display_update()
+def _refresh():
+    "Hide or unhide plugins based on their ``hidden`` flag."
 
+    any_ready = False
 
-def fetch_remote_version():
-    """
-    Fetch the version the trucker SHOULD be running.
-    """
-    try:
-        response = requests.get(REMOTE_VERSION_URL, timeout=0.5)
-        sys.stderr.write("response.status_code:%d\n" % response.status_code)
-        sys.stderr.write("response.text:%s\n" % response.text)
-        if response.status_code == 200:
-            clean_response = response.text.rstrip()
-            if len(versiontuple(clean_response)) != 3:
-                # Bad format. We need a version number formatted as 1.2.3
-                this.network_error_str = "Bad version format reply from server"
-                return
+    # First, the plugins:
+    for plugin in this.plugins:
+        plugin_frame = this.plugin_frames.get(plugin)
+        plugin_row = this.plugin_rows.get(plugin)
 
-            # Store for later
-            this.remote_version = clean_response
+        if plugin_frame and plugin_row:
+            if plugin.hidden or not plugin.ready:
+                plugin_frame.grid_forget()
 
-            sys.stderr.write("comparing remote version '{REMOTE}' to local version '{LOCAL}'\n".format(
-                REMOTE=this.remote_version,
-                LOCAL=HH_VERSION
-            ))
-            if HH_VERSION == this.remote_version:
-                this.upgrade_required = False
             else:
-                this.upgrade_required = True
-        else:
-            this.network_error_str = "Bad response code {HTTP_RESP_CODE} from server".format(HTTP_RESP_CODE=response.status_code)
+                any_ready = True
+                plugin_frame.grid(row=plugin_row, sticky=tk.EW)
 
-    except requests.exceptions.Timeout:
-        # sys.stderr.write("requests.exceptions.Timeout\n")
-        this.network_error_str = "Request to upgrade URL timed out while finding current version"
-
-    except: # pylint: disable=W0702
-        # sys.stderr.write("generic exception\n")
-        this.network_error_str = "Unknown network problem finding current version"
-
-
-def upgrade_callback():
-    """
-    Handle the trucker clicking the Upgrade button.
-    """
-    # sys.stderr.write("You pushed the upgrade button\n")
-
-    # Catch upgrade already done once
-    if this.upgrade_applied:
-        msginfo = ['Upgrade already applied', 'Please close and restart EDMC']
-        tkMessageBox.showinfo("Upgrade status", "\n".join(msginfo))
-        return
-
-    this_fullpath = os.path.realpath(__file__)
-    this_filepath, _ext = os.path.splitext(this_fullpath)
-    corrected_fullpath = this_filepath + ".py" # Somehow we might need this to stop it hitting the pyo file?
-
-    # sys.stderr.write("path is %s\n" % this_filepath)
-    try:
-        response = requests.get(REMOTE_PLUGIN_FILE_URL)
-        if response.status_code == 200:
-
-            # Check our required version number is in the response, otherwise
-            # it's probably not our file and should not be trusted
-            expected_version_substr = "HH_VERSION=\"{REMOTE_VER}\"".format(REMOTE_VER=this.remote_version)
-            if expected_version_substr in response.text:
-                with open(corrected_fullpath, "wb") as f: # pylint: disable=C0103
-                    f.seek(0)
-                    f.write(response.content)
-                    f.truncate()
-                    f.flush()
-                    os.fsync(f.fileno())
-                    this.upgrade_applied = True # Latch on upgrade successful
-                    msginfo = ['Upgrade has completed sucessfully.', 'Please close and restart EDMC']
-                    tkMessageBox.showinfo("Upgrade status", "\n".join(msginfo))
-
-                sys.stderr.write("Finished plugin upgrade!\n")
-            else:
-                msginfo = ['Upgrade failed. Did not contain the correct version', 'Please try again']
-                tkMessageBox.showinfo("Upgrade status", "\n".join(msginfo))
-        else:
-            msginfo = ['Upgrade failed. Bad server response', 'Please try again']
-            tkMessageBox.showinfo("Upgrade status", "\n".join(msginfo))
-
-    except: # pylint: disable=W0702
-        sys.stderr.write("Upgrade problem when fetching the remote data: {E}\n".format(E=sys.exc_info()[0]))
-        msginfo = ['Upgrade encountered a problem.', 'Please try again, and restart if problems persist']
-        tkMessageBox.showinfo("Upgrade status", "\n".join(msginfo))
-
-
-def plugin_status_text():
-    """
-    Report our plugin status.
-    """
-    if this.upgrade_required is None:
-        return "Hutton Helper {VER} OK (upgrade status unknown)".format(VER=HH_VERSION)
-    elif this.upgrade_required:
-        return "Hutton Helper {VER} OLD (Open Settings->HH to upgrade)".format(VER=HH_VERSION)
+    # Second, the front cover we display if no plugins are enabled AND ready:
+    if any_ready:
+        this.front_cover.grid_forget()
     else:
-        return "Hutton Helper {VER} OK (up-to-date)".format(VER=HH_VERSION)
+        front_cover.grid(
+            row=this.front_cover_row,
+            column=0,
+            sticky=tk.EW,
+            padx=10,
+            pady=10
+        )
 
 
-def versiontuple(version_string):
-    """
-    Convert our version to a tuple.
-    """
-    return tuple(map(int, (version_string.split("."))))
+def plugin_prefs(parent, cmdr, is_beta):
+    "Called each time the user opens EDMC settings. Return an ``nb.Frame``."
+
+    padx, pady = 10, 5  # formatting
+
+    frame = nb.Frame(parent)
+    frame.columnconfigure(0, weight=1)
+
+    row = 0
+    for plugin in plugins:
+        try:
+            plugin_prefs_frame = plugin.plugin_prefs(frame, cmdr, is_beta)
+            if plugin_prefs_frame:
+                plugin_prefs_frame.grid(row=row, column=0, padx=padx, pady=pady, sticky=tk.W)
+                row = row + 1
+
+        except:
+            PANIC("{}.plugin_prefs".format(plugin))
+            continue
+
+    return frame
 
 
-def open_trucker_browser(url):
-    """
-    Open the trucker's browser.
-    """
-    webbrowser.open_new(url)
+def prefs_changed(cmdr, is_beta):
+    "Called when the user clicks OK on the settings dialog."
+
+    for plugin in this.plugins:
+        try:
+            plugin.prefs_changed(cmdr, is_beta)
+        except:
+            PANIC("{}.prefs_changed".format(plugin))
+
+    _refresh()
 
 
-def news_update():
-    """
-    Update the news.
-    """
-    this.parent.after(300000, news_update)
-    try:
-        url = "http://hot.forthemug.com:4567/news.json/"
-        response = requests.get(url)
-        news_data = response.json()
-        # sys.stderr.write("got news!'{HDLN}' and link '{LNK}'\n".format(HDLN=news_data['headline'], LNK=news_data['link']))
-        if response.status_code == 200:
-            if len(news_data['headline']) > 30:
-                this.news_headline['text'] = textwrap.fill(news_data['headline'], 30)
-            else:
-                this.news_headline['text'] = news_data['headline']
+EVENT_XMIT_PATHS = {
+    'Bounty': '/bounty',
+    'Cargo': '/cargo',
+    'CargoDepot': '/cargodepot',
+    'CollectCargo': '/cargocollection',
+    'CommunityGoal': '/communitygoal',
+    'Died': '/death',
+    'Docked': '/dockedinfoupdate',
+    'FactionKillBond': '/factionkillbond',
+    'FSDJump': '/fsdjump',
+    'LoadGame': '/loadgame',
+    'Loadout': '/loadout',
+    'MarketBuy': '/buy',
+    'MarketSell': '/sell',
+    'MissionAbandoned': '/missioncomplete',
+    'MissionAccepted': '/missiontake',
+    'MissionCompleted': '/missioncomplete',
+    'MissionFailed': '/missioncomplete',
+    'MissionRedirected': '/missionupdate',
+    'NpcCrewPaidWage': '/npccrewpaidwage',
+    'Promotion': '/cmdrpromotion',
+    'Rank': '/rank',
+    'Scan': '/scan',
+    'SellExplorationData': '/explorationdata',
+    'Statistics': '/stats',
+    'SupercruiseEntry': '/supercruiseentry',
+    'SupercruiseExit': '/supercruiseexit',
+    'Undocked': '/undockedinfoupdate',
+}
 
-            this.news_headline['url'] = news_data['link']
-        else:
-            this.news_headline['text'] = "News refresh Failed"
+EVENT_STATUS_FORMATS = {
+    'CargoDepot': "Wing Mission Info updated",
+    'CollectCargo': "Cargo scooped into cargo bay",
+    'CommunityGoal': "Community Goal Data Received",
+    'Died': "Oops.... you died :( :( :(",
+    'Docked': "Docked",
+    'DockingCancelled': "Docking Canceled",
+    'DockingDenied': "Docking Denied",
+    'DockingGranted': "Docking request granted",
+    'DockingTimeout': "Docking Timed out",
+    'FSDJump': "Jumped into {StarSystem} system",
+    'HeatWarning': "Its getting warm in here",
+    'LeaveBody': "Leaving Gravitational Well",
+    'Liftoff': "We have Liftoff!",
+    'MissionAbandoned': "Mission Abandoned",
+    'MissionAccepted': "Mission Accepted",
+    'MissionCompleted': "Mission Completed",
+    'MissionFailed': "Mission Failed",
+    'MissionRedirected': "Mission Update Received",
+    'Promotion': "Congratulations on your promotion commander",
+    'Scan': "Scan Data stored for Cartographics",
+    'Scanned': "You have been scanned",
+    'SupercruiseEntry': "Entered Supercruise",
+    'SupercruiseExit': "Exited Supercruise",
+    'Touchdown': "Touchdown!",
+    'Undocked': "Undocked",
+}
 
-    except: # pylint: disable=W0702
-        this.news_headline['text'] = "Could not update news from HH server"
+REDEEM_TYPE_STATUS_FORMATS = {
+    'CombatBond': "Combat Bond cashed in for {:,.0f} credits",
+    'bounty': "Bounty Voucher cashed in for {:,.0f} credits",
+    'settlement': "{:,.0f} credits paid to settle fines",
+    'trade': "{:,.0f} credits earned from trade voucher",
+}
 
+COMMAND_XMIT_PATHS = {
+    'mission close': '/missionreset',
+    'tick update': '/tickupdate',
+    'TLDR': '/tldr',
+    'COLBRIEF': '/tldrcol',
+    'stateupdate': '/state',
+    'recheck system': '/recheckinfluence',
+    'generalupdate': '/dailygeneral',
+    'coloniaupdate': '/colstate',
+    'race start': '/racestart',
+    'race end': '/raceend',
+    'exploration start': '/explostart',
+    'reset exploration data': '/exploreset',
+    'inf reload': '/devinfreload',
+    'allow list reload': '/devallowreload',
+    'black ops add': '/blopsadd',
+    'black ops active': '/silentrunning',
+    'black ops reset': '/normalrunning',
+    'auth list reload': '/authlistreload',
+    'explo system': '/explosystem.json/{cmdr}/{system}',
+    'best hutton run': '/besthuttonrun.json/{cmdr}'
+}
 
-def influence_data_call():
-    """
-    Get and display Hutton influence data.
-    """
-    try:
-        url = "http://hot.forthemug.com:4567/msgbox_influence.json"
-        response = requests.get(url)
-        influence_data = response.json()
-        # sys.stderr.write("got news!'{HDLN}' and link '{LNK}'\n".format(HDLN=news_data['headline'], LNK=news_data['link']))
-        if response.status_code == 200:
-            tkMessageBox.showinfo("Hutton Influence Data", "\n".join(influence_data))
-        else:
-            tkMessageBox.showinfo("Hutton Influence Data", "Could not get Influence Data")
+COMMAND_STATUS_FORMATS = {
+    # OPTIONAL unless there's no matching COMMAND_XMIT_PATHS entry above
+    'TLDR': "Sent TLDR update Command",
+    'COLBRIEF': "Sent TLDR update Colonia Command",
+    'recheck system': "Forced System Re-check of {system} on next jump in",
+    'race start': "Sent Race START info",
+    'race end': "Sent Race END info",
+    'reset exploration data': "Reset your Exploration 2.0 Data",
+    'inf reload': "Developer Mode : inf reload command sent",
+    'allow list reload': "Developer Mode : allow list reload command sent",
+    'black ops add': "Admin Mode : Black Ops Faction Added",
+    'black ops active': "Black ops Mode : Enjoy Being Naughty Commander",
+    'black ops reset': "Black ops Mode : Welcome back Commander",
+    'auth list reload': "Admin Mode : Reloaded Auth List",
+    'explo system': "You Have sold {ExplorationSystemTotal:,.0f} credits in {system} today",
+    'best hutton run': "BEST Hutton Run is CMDR {commandername} in {TravelTime}",
+}
 
-    except: # pylint: disable=W0702
-        tkMessageBox.showinfo("Hutton Influence Data", "Did not Receive response from HH Server")
-
-
-def daily_info_call():
-    """
-    Get and display the daily update.
-    """
-    try:
-        url = "http://hot.forthemug.com:4567/msgbox_daily_update.json"
-        response = requests.get(url)
-        daily_data = response.json()
-        # sys.stderr.write("got news!'{HDLN}' and link '{LNK}'\n".format(HDLN=news_data['headline'], LNK=news_data['link']))
-        if response.status_code == 200:
-            tkMessageBox.showinfo("Hutton Daily update", "\n".join(daily_data))
-        else:
-            tkMessageBox.showinfo("Hutton Daily update", "Could not get Daily Update Data")
-
-    except: # pylint: disable=W0702
-        tkMessageBox.showinfo("Hutton Daily update", "Did not Receive response from HH Server")
-
-
-def display_update():
-    """
-    Update the display.
-    """
-    if config.getint("ShowExploValue") == 0:
-        this.exploration_label.grid_forget()
-        this.exploration_status.grid_forget()
-    else:
-        this.exploration_status['text'] = "<Scan object to update>"
-        this.exploration_label.grid(row=2, column=0, sticky=tk.W)
-        this.exploration_status.grid(row=2, column=1, columnspan=3, sticky=tk.W)
-
-
-def explo_credits(cmdr):
-    """
-    Get and display exploration credits.
-    """
-    credit_url = "http://forthemug.com:4567/explocredit.json/{}".format(cmdr)
-    response = requests.get(credit_url)
-    json_data = response.json()
-    this.exploration_status['text'] = "{:,.0f} credits".format(float(json_data['ExploCredits']))
-
-
-def plugin_app(parent):
-    """
-    Create a pair of TK widgets for the EDMC main window
-    """
-    this.parent = parent
-    this.frame = tk.Frame(parent)
-    this.inside_frame = tk.Frame(this.frame)
-    this.exploration_frame = tk.Frame(this.frame)
-    this.inside_frame.columnconfigure(4, weight=1)
-    this.exploration_frame.columnconfigure(2, weight=1)
-    label_string = plugin_status_text()
-
-    this.frame.columnconfigure(2, weight=1)
-    this.label = HyperlinkLabel(this.frame, text='Helper:', url='https://hot.forthemug.com/', underline=False)
-    this.status = tk.Label(this.frame, anchor=tk.W, text=label_string)
-    this.news_label = tk.Label(this.frame, anchor=tk.W, text="News:")
-    this.news_headline = HyperlinkLabel(this.frame, text="", url="", underline=True)
-    this.daily_button = tk.Button(this.inside_frame, text="Daily Update", command=daily_info_call)
-    this.influence_button = tk.Button(this.inside_frame, text="Influence", command=influence_data_call)
-    this.stats_button = tk.Button(this.inside_frame, text="Stats", command=lambda: open_trucker_browser(STATS_URL))
-    this.radio_button = tk.Button(this.inside_frame, text="Radio", command=lambda: open_trucker_browser(RADIO_URL))
-    this.exploration_label = tk.Label(this.inside_frame, text="Explo Credits:")
-    this.exploration_status = tk.Label(this.inside_frame, text="")
-    this.spacer = tk.Label(this.frame)
-    this.label.grid(row=0, column=0, sticky=tk.W)
-    this.status.grid(row=0, column=1, sticky=tk.W)
-    this.news_label.grid(row=1, column=0, sticky=tk.W)
-    this.news_headline.grid(row=1, column=1, sticky=tk.W)
-    this.inside_frame.grid(row=3, column=0, columnspan=2, sticky=tk.W)
-    # this.spacer.grid(row=2, column=0, sticky=tk.W)
-    this.daily_button.grid(row=3, column=0, sticky=tk.W)
-    this.influence_button.grid(row=3, column=1, sticky=tk.W, padx=5, pady=10)
-    this.stats_button.grid(row=3, column=2, sticky=tk.W)
-    this.radio_button.grid(row=3, column=3, sticky=tk.W, padx=5)
-    this.exploration_label.grid(row=2, column=0, sticky=tk.W)
-    this.exploration_status.grid(row=2, column=1, columnspan=2, sticky=tk.W)
-    news_update()
-    display_update()
-
-    return this.frame
+COMMANDS = set(COMMAND_XMIT_PATHS.keys()) | set(COMMAND_STATUS_FORMATS.keys())
 
 
-COMPRESSED_OCTET_STREAM = {'content-type': 'application/octet-stream', 'content-encoding': 'zlib'}
-
-
-def journal_entry(cmdr, is_beta, system, station, entry, _state):
+def journal_entry(cmdr, is_beta, system, station, entry, state):
     """
     E:D client made a journal entry
     :param cmdr: The Cmdr name, or None if not yet known
@@ -345,6 +305,11 @@ def journal_entry(cmdr, is_beta, system, station, entry, _state):
     :param state: A dictionary containing info about the Cmdr, current ship and cargo
     :return:
     """
+
+    if is_beta:
+        this.status['text'] = 'Disabled due to beta'
+        return
+
     entry['commandername'] = cmdr
     entry['hhstationname'] = station
     entry['hhsystemname'] = system
@@ -352,81 +317,48 @@ def journal_entry(cmdr, is_beta, system, station, entry, _state):
 
     compress_json = json.dumps(entry)
     transmit_json = zlib.compress(compress_json)
-    # transmit_json = json.dumps(entry)
 
-    if is_beta:
-        pass
+    event = entry['event']
 
-    elif entry['event'] == 'StartUp':
-        explo_credits(cmdr)
+    # Declare a function to make it easy to send the event to the server and get the response.
+    # We've smuggled the transmit_json variable from journal_entry into xmit_event using a
+    # keyword argument because Python 2.x doesn't have 'nonlocal'. Also, cmdr and system:
+    def xmit_event(path, transmit_json=transmit_json, cmdr=cmdr, system=system):
+        "Transmit the event to our server at ``path.format(cmdr=cmdr, system=system)``."
+        path = path.format(cmdr=cmdr, system=system)
+        return xmit.post(path, data=transmit_json, headers=xmit.COMPRESSED_OCTET_STREAM)
 
-    elif entry['event'] == 'FSDJump':
-        url_jump = 'http://forthemug.com:4567/fsdjump'
-        response = requests.post(url_jump, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
-        this.status['text'] = "Jumped into {} system".format(entry['StarSystem'])
-        if 'StarPos' in entry:
-            sys.stderr.write("Arrived at {} ({},{},{})\n".format(entry['StarSystem'], *tuple(entry['StarPos'])))
-        else:
-            sys.stderr.write("Arrived at {}\n".format(entry['StarSystem']))
+    # If we can find an entry in XMIT_PATHS, send the event to the server at the required path:
+    xmit_path = EVENT_XMIT_PATHS.get(event)
+    if xmit_path:
+        xmit_event(xmit_path)
 
-    elif entry['event'] == 'MarketBuy':
-        url_buy = 'http://forthemug.com:4567/buy'
-        response = requests.post(url_buy, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
+    # If we can find an entry in STATUS_FORMATS, fill in the string and display it to the user:
+    status_format = EVENT_STATUS_FORMATS.get(event)
+    if status_format:
+        this.status['text'] = status_format.format(**entry)
+
+    # Update the plugins
+    for plugin in this.plugins:
+        try:
+            plugin.journal_entry(cmdr, is_beta, system, station, entry, state)
+        except:
+            PANIC("{}.journal_entry".format(plugin))
+
+    # Special event handling, which happens IN ADDITION TO the automatic transmission and
+    # status message handling above:
+
+    if event == 'MarketBuy':
+        # For some events, we need our status to be based on translations of the event that
+        # string.format can't do without a scary custom formatter:
         this.status['text'] = "{:,.0f} {} bought".format(float(entry['Count']), entry['Type'])
-        sys.stderr.write("{} CMDR {} has bought {} {} from {} in the {} system costing {} credits\n".format(
-            entry['timestamp'],
-            cmdr,
-            entry['Count'],
-            entry['Type'],
-            station,
-            system,
-            entry['TotalCost']
-        ))
-        sys.stderr.write("{}".format(response))
 
-    elif entry['event'] == 'Rank':
-        url_rank = 'http://forthemug.com:4567/rank'
-        response = requests.post(url_rank, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
-
-    elif entry['event'] == 'MarketSell':
-        url_sell = 'http://forthemug.com:4567/sell'
-        response = requests.post(url_sell, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
+    elif event == 'MarketSell':
         this.status['text'] = "{:,.0f} {} sold".format(float(entry['Count']), entry['Type'])
-        sys.stderr.write("{} CMDR {} has sold {} {} in {} in the {} system for {} credits\n".format(
-            entry['timestamp'],
-            cmdr,
-            entry['Count'],
-            entry['Type'],
-            station,
-            system,
-            entry['TotalSale']
-        ))
 
-    elif entry['event'] == 'DockingGranted':
-        this.status['text'] = "Docking request granted"
+    elif event == 'CommunityGoal':
+        # For some events, we need custom transmission logic, e.g. to the Community Goal Reward Thresholds Calculator:
 
-    elif entry['event'] == 'DockingCancelled':
-        this.status['text'] = "Docking Canceled"
-
-    elif entry['event'] == 'DockingDenied':
-        this.status['text'] = "Docking Denied"
-
-    elif entry['event'] == 'DockingTimeout':
-        this.status['text'] = "Docking Timed out"
-
-    elif entry['event'] == 'Liftoff':
-        this.status['text'] = "We have Liftoff!"
-
-    elif entry['event'] == 'Touchdown':
-        this.status['text'] = "Touchdown!"
-
-    elif entry['event'] == 'LeaveBody':
-        this.status['text'] = "Leaving Gravitational Well"
-
-    elif entry['event'] == 'CommunityGoal':
-        this.status['text'] = "Community Goal Data Received"
-        url_transmit_cg = 'http://forthemug.com:4567/communitygoal'
-        print 'CG updating'
         for goal in entry['CurrentGoals']:
 
             if not goal['IsComplete']: # v0.2Collect Active CG only
@@ -462,572 +394,118 @@ def journal_entry(cmdr, is_beta, system, station, entry, _state):
                 except: # pylint: disable=W0702
                     this.msg = 'CG Post Exception'
 
-        response = requests.post(url_transmit_cg, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
-
-    elif entry['event'] == 'CargoDepot':
-        this.status['text'] = "Wing Mission Info updated"
-        url_transmit_cargo = 'http://forthemug.com:4567/cargodepot'
-        response = requests.post(url_transmit_cargo, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
-
-    elif entry['event'] == 'Docked':
-        this.status['text'] = "Docked"
-        url_transmit_dockinf = 'http://forthemug.com:4567/dockedinfoupdate'
-        response = requests.post(url_transmit_dockinf, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
-        sys.stderr.write("{} CMDR {} has docked at {} in the {} system \n".format(
-            entry['timestamp'],
-            cmdr,
-            station,
-            system
-        ))
-
-    elif entry['event'] == 'Undocked':
-        this.status['text'] = "Undocked"
-        url_transmit_undockinf = 'http://forthemug.com:4567/undockedinfoupdate'
-        response = requests.post(url_transmit_undockinf, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
-        sys.stderr.write("{} CMDR {} has undocked from {} in the {} system \n".format(
-            entry['timestamp'],
-            cmdr,
-            station,
-            system
-        ))
-
-    elif entry['event'] == 'Loadout':
-        url_transmit_loadout = 'http://forthemug.com:4567/loadout'
-        response = requests.post(url_transmit_loadout, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
-
-    elif entry['event'] == 'SupercruiseEntry':
-        this.status['text'] = "Entered Supercruise"
-        url_transmit_supercruiseentry = 'http://forthemug.com:4567/supercruiseentry'
-        response = requests.post(url_transmit_supercruiseentry, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
-
-    elif entry['event'] == 'SupercruiseExit':
-        this.status['text'] = "Exited Supercruise"
-        url_transmit_supercruiseexit = 'http://forthemug.com:4567/supercruiseexit'
-        response = requests.post(url_transmit_supercruiseexit, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
-
-    elif entry['event'] == 'NpcCrewPaidWage':
-        url_transmit_npc_paid_wage = 'http://forthemug.com:4567/npccrewpaidwage'
-        response = requests.post(url_transmit_npc_paid_wage, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
-
-    elif entry['event'] == 'LoadGame':
-        url_transmit_loadgame = 'http://forthemug.com:4567/loadgame'
-        response = requests.post(url_transmit_loadgame, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
-
-    elif entry['event'] == 'MissionAccepted':
-        url_278024 = 'http://forthemug.com:4567/missiontake'
-        response = requests.post(url_278024, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
-        this.status['text'] = "Mission Accepted"
-        sys.stderr.write("{} CMDR {} has accepted a mission of type {} for {} in the {} system. Mission ID {} \n".format(
-            entry['timestamp'],
-            cmdr,
-            entry['Name'],
-            entry['Faction'],
-            system,
-            entry['MissionID']
-        ))
-        # sys.stderr.write("{} MissionID {} Required {} {} needed at {} before {} \n".format(
-        #     entry['timestamp'],
-        #     entry['MissionID'],
-        #     entry['Count'],
-        #     entry['Commodity_Localised'],
-        #     entry['DestinationStation'],
-        #     entry['Expiry']
-        # ))
-
-    elif entry['event'] == 'MissionCompleted':
-        this.status['text'] = "Mission Completed"
-        sys.stderr.write("{} CMDR {} has completed the mission with MissionID {} good job! \n".format(
-            entry['timestamp'],
-            cmdr,
-            entry['MissionID']
-        ))
-        url_278025 = 'http://forthemug.com:4567/missioncomplete'
-        response = requests.post(url_278025, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
-
-    elif entry['event'] == 'MissionAbandoned':
-        this.status['text'] = "Mission Abandoned"
-        sys.stderr.write("{} CMDR {} has abandoned the mission with MissionID {} :( \n".format(
-            entry['timestamp'],
-            cmdr,
-            entry['MissionID']
-        ))
-        url_278026 = 'http://forthemug.com:4567/missioncomplete'
-        response = requests.post(url_278026, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
-
-    elif entry['event'] == 'MissionFailed':
-        this.status['text'] = "Mission Failed"
-        sys.stderr.write("{} CMDR {} has failed the mission with MissionID {} :( \n".format(
-            entry['timestamp'],
-            cmdr,
-            entry['MissionID']
-        ))
-        url_278027 = 'http://forthemug.com:4567/missioncomplete'
-        response = requests.post(url_278027, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
-
-    elif entry['event'] == 'FactionKillBond':
+    elif event == 'FactionKillBond':
         this.status['text'] = "Kill Bond Earned for {:,.0f} credits".format(float(entry['Reward']))
-        sys.stderr.write("{} CMDR {} has earned a bond of {} fighting in the {} system fighting against the {} :) \n".format(
-            entry['timestamp'],
-            cmdr,
-            entry['Reward'],
-            system,
-            entry['VictimFaction']
-        ))
-        url_transmit_bond = 'http://forthemug.com:4567/factionkillbond'
-        response = requests.post(url_transmit_bond, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
 
-    elif entry['event'] == 'Bounty':
+    elif event == 'Bounty':
         this.status['text'] = "Bounty Earned for {:,.0f} credits".format(float(entry['TotalReward']))
-        sys.stderr.write("{} CMDR {} has earned {} by killing a {} fighting in the {} system fighting against the {} :) \n".format(
-            entry['timestamp'],
-            cmdr,
-            entry['TotalReward'],
-            entry['Target'],
-            system,
-            entry['VictimFaction']
-        ))
-        url_transmit_bounty = 'http://forthemug.com:4567/bounty'
-        response = requests.post(url_transmit_bounty, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
 
-    elif entry['event'] == 'RedeemVoucher':
-        if entry['Type'] == 'CombatBond':
-            this.status['text'] = "Combat Bond cashed in for {:,.0f} credits".format(float(entry['Amount']))
-            sys.stderr.write("{} CMDR {} has earned {} by killing combatants in the {} combat zone :) \n".format(
-                entry['timestamp'], cmdr, entry['Amount'], system))
-            url_transmit_voucher = 'http://forthemug.com:4567/redeemvoucher'
-            response = requests.post(url_transmit_voucher, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
+    elif event == 'RedeemVoucher':
+        # For some events, we need to check another lookup table. There are ways to make the original lookup table
+        # do this heavy lifting, too, but it'd make the code above more complicated than a trucker who'd only just
+        # learned Python could be expected to maintain.
 
-        if entry['Type'] == 'bounty':
-            this.status['text'] = "Bounty Voucher cashed in for {:,.0f} credits".format(float(entry['Amount']))
-            sys.stderr.write("{} CMDR {} has earned {} by killing a pirates in the {} system :) \n".format(
-                entry['timestamp'],
-                cmdr,
-                entry['Amount'],
-                system
-            ))
-            url_transmit_voucher = 'http://forthemug.com:4567/redeemvoucher'
-            response = requests.post(url_transmit_voucher, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
+        redeem_status_format = REDEEM_TYPE_STATUS_FORMATS.get(entry['Type'])
+        if redeem_status_format:
+            this.status['text'] = redeem_status_format.format(float(entry['Amount']))
+            xmit_event('/redeemvoucher')
 
-        if entry['Type'] == 'settlement':
-            this.status['text'] = "{:,.0f} credits paid to settle fines".format(float(entry['Amount']))
-            sys.stderr.write("{} CMDR {} has paid {} to settle fines in and around the {} system :) \n".format(
-                entry['timestamp'],
-                cmdr,
-                entry['Amount'],
-                system
-            ))
-            url_transmit_voucher = 'http://forthemug.com:4567/redeemvoucher'
-            response = requests.post(url_transmit_voucher, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
-
-        if entry['Type'] == 'trade':
-            this.status['text'] = "{:,.0f} credits earned from trade voucher".format(float(entry['Amount']))
-            sys.stderr.write("{} CMDR {} has earned {} credits handing in trade vouchers in the {} system :) \n".format(
-                entry['timestamp'],
-                cmdr,
-                entry['Amount'],
-                system
-            ))
-            url_transmit_voucher = 'http://forthemug.com:4567/redeemvoucher'
-            response = requests.post(url_transmit_voucher, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
-
-    elif entry['event'] == 'SellExplorationData':
+    elif event == 'SellExplorationData':
         baseval = entry['BaseValue']
         bonusval = entry['Bonus']
         totalvalue = baseval + bonusval
         this.status['text'] = "Sold ExplorationData for {:,.0f} credits".format(float(totalvalue))
-        sys.stderr.write("{} CMDR {} has sold {} credits of exploration data \n".format(entry['timestamp'], cmdr, totalvalue))
-        url_transmit_voucher = 'http://forthemug.com:4567/explorationdata'
-        response = requests.post(url_transmit_voucher, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
 
-    elif entry['event'] == 'Statistics':
-        url_transmit_stats = 'http://forthemug.com:4567/stats'
-        response = requests.post(url_transmit_stats, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
+    elif event == 'SendText': # pylint: disable=R1702
+        # Another lookup table, this time a little odder.
+        for command in COMMANDS:
+            if command in entry['Message']:
+                # Get the status format:
+                command_status_format = COMMAND_STATUS_FORMATS.get(command)
+                if not command_status_format:
+                    command_status_format = 'Sent {command} Command'
 
-    elif entry['event'] == 'Died':
-        this.status['text'] = "Oops.... you died :( :( :("
-        sys.stderr.write("{} CMDR {} died \n".format(entry['timestamp'], cmdr))
-        url_transmit_death = 'http://forthemug.com:4567/death'
-        response = requests.post(url_transmit_death, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
+                # Send the event if required, getting json_data back:
+                json_data = None
+                command_xmit_path = COMMAND_XMIT_PATHS.get(command)
+                if command_xmit_path:
+                    command_xmit_path = command_xmit_path.format(cmdr=cmdr, system=system)
+                    if '{cmdr}' in command_xmit_path: # FILTHY hack to figure out if it's a 'get'
+                        json_data = xmit.get(command_xmit_path)
+                    else:
+                        json_data = xmit.post(command_xmit_path, data=transmit_json, headers=xmit.COMPRESSED_OCTET_STREAM)
 
-    elif entry['event'] == 'Scan':
-        this.status['text'] = "Scan Data stored for Cartographics"
-        url_transmit_scan = 'http://forthemug.com:4567/scan'
-        response = requests.post(url_transmit_scan, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
-        # sleep(0.2)
-        explo_credits(cmdr)
+                if not json_data:
+                    command_status_format = 'Failed to Send {command} Command'
 
-    elif entry['event'] == 'MissionRedirected':
-        this.status['text'] = "Mission Update Received"
-        url_transmit_missionupdate = 'http://forthemug.com:4567/missionupdate'
-        response = requests.post(url_transmit_missionupdate, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
+                # Format and display the status text:
+                print "Filling in: {}".format(command_status_format)
+                this.status['text'] = command_status_format.format(
+                    # Add variables here that you'd like to use in your status text:
+                    command=command,
+                    system=system,
+                    # We also supply the server's reply:
+                    **(json_data or {})
+                )
 
-    elif entry['event'] == 'CollectCargo':
-        this.status['text'] = "Cargo scooped into cargo bay"
-        url_transmit_scooped = 'http://forthemug.com:4567/cargocollection'
-        response = requests.post(url_transmit_scooped, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
+                # Special handling
+                # ONLY performed if there's ALSO an entry in COMMAND_XMIT_PATHS or COMMAND_STATUS_FORMATS:
 
-    elif entry['event'] == 'Promotion':
-        this.status['text'] = "Congratulations on your promotion commander"
-        url_transmit_promo = 'http://forthemug.com:4567/cmdrpromotion'
-        response = requests.post(url_transmit_promo, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
+                if command == 'reset exploration data':
+                    this.exploration_display.explo_credits(cmdr)
 
-    elif entry['event'] == 'Cargo':
-        url_transmit_cargo = 'http://forthemug.com:4567/cargo'
-        response = requests.post(url_transmit_cargo, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
-
-    elif entry['event'] == 'HeatWarning':
-        this.status['text'] = "Its getting warm in here"
-
-    elif entry['event'] == 'Scanned':
-        this.status['text'] = "You have been scanned"
-
-    elif entry['event'] == 'SendText':
-        if "mission close" in entry['Message']:
-            this.status['text'] = "Sending Mission close Command"
-            url_transmit_mr = 'http://forthemug.com:4567/missionreset'
-            response = requests.post(url_transmit_mr, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
-
-        if "tick update" in entry['Message']:
-            this.status['text'] = "Sending tick update Command"
-            url_transmit_tu = 'http://forthemug.com:4567/tickupdate'
-            response = requests.post(url_transmit_tu, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
-
-        if "TLDR" in entry['Message']:
-            this.status['text'] = "Sending TLDR update Command"
-            url_transmit_tldr = 'http://forthemug.com:4567/tldr'
-            response = requests.post(url_transmit_tldr, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
-
-        if "COLBRIEF" in entry['Message']:
-            this.status['text'] = "Sending TLDR update Colonia Command"
-            url_transmit_tldrcol = 'http://forthemug.com:4567/tldrcol'
-            response = requests.post(url_transmit_tldrcol, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
-
-        if "stateupdate" in entry['Message']:
-            this.status['text'] = "Sending state update Command"
-            url_transmit_state = 'http://forthemug.com:4567/state'
-            response = requests.post(url_transmit_state, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
-
-        if "recheck system" in entry['Message']:
-            this.status['text'] = "Forcing System Re-check of {} on next jump in".format(system)
-            url_transmit_fr = 'http://forthemug.com:4567/recheckinfluence'
-            response = requests.post(url_transmit_fr, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
-
-        if "generalupdate" in entry['Message']:
-            this.status['text'] = "Sending General update Command"
-            url_transmit_gen_state = 'http://forthemug.com:4567/dailygeneral'
-            response = requests.post(url_transmit_gen_state, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
-
-        if "coloniaupdate" in entry['Message']:
-            this.status['text'] = "Sending state update Command"
-            url_transmit_col_state = 'http://forthemug.com:4567/colstate'
-            response = requests.post(url_transmit_col_state, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
-
-        if "race start" in entry['Message']:
-            this.status['text'] = "Sending Race START info"
-            url_transmit_tu = 'http://forthemug.com:4567/racestart'
-            response = requests.post(url_transmit_tu, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
-
-        if "race end" in entry['Message']:
-            this.status['text'] = "Sending Race END info"
-            url_transmit_tu = 'http://forthemug.com:4567/raceend'
-            response = requests.post(url_transmit_tu, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
-
-        if "exploration start" in entry['Message']:
-            this.status['text'] = "Sending Exploration Start command"
-            url_transmit_explo_start = 'http://forthemug.com:4567/explostart'
-            response = requests.post(url_transmit_explo_start, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
-
-        if "reset exploration data" in entry['Message']:
-            this.status['text'] = "Resetting your Exploration 2.0 Data"
-            url_transmit_explo_reset = 'http://forthemug.com:4567/exploreset'
-            response = requests.post(url_transmit_explo_reset, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
-            explo_credits(cmdr)
-
-        if "inf reload" in entry['Message']:
-            this.status['text'] = "Developer Mode : inf reload command sent"
-            url_transmit_dev_inf_reload = 'http://forthemug.com:4567/devinfreload'
-            response = requests.post(url_transmit_dev_inf_reload, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
-
-        if "allow list reload" in entry['Message']:
-            this.status['text'] = "Developer Mode : allow list reload command sent"
-            url_transmit_dev_allow_reload = 'http://forthemug.com:4567/devallowreload'
-            response = requests.post(url_transmit_dev_allow_reload, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
-
-        if "black ops add" in entry['Message']:
-            this.status['text'] = "Admin Mode : Black Ops Faction Added"
-            url_transmit_dev_blops_add = 'http://forthemug.com:4567/blopsadd'
-            response = requests.post(url_transmit_dev_blops_add, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
-
-        if "black ops active" in entry['Message']:
-            this.status['text'] = "Black ops Mode : Enjoy Being Naughty Commander"
-            blops_add = 'http://forthemug.com:4567/silentrunning'
-            response = requests.post(blops_add, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
-
-        if "black ops reset" in entry['Message']:
-            this.status['text'] = "Black ops Mode : Welcome back Commander"
-            blops_remove = 'http://forthemug.com:4567/normalrunning'
-            response = requests.post(blops_remove, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
-
-        if "auth list reload" in entry['Message']:
-            this.status['text'] = "Admin Mode : Reloading Auth List"
-            url_transmit_dev_auth_reload = 'http://forthemug.com:4567/authlistreload'
-            response = requests.post(url_transmit_dev_auth_reload, data=transmit_json, headers=COMPRESSED_OCTET_STREAM, timeout=7)
-
-        if "explo system" in entry['Message']:
-            url = "http://forthemug.com:4567/explosystem.json/{}/{}".format(cmdr, system)
-            response = requests.get(url)
-            json_data = response.json()
-            this.status['text'] = "You Have sold {:,.0f} credits in {} today".format(json_data['ExplorationSystemTotal'], system)
-
-        if "explo today" in entry['Message']:
-            url = "http://forthemug.com:4567/explotoday.json/{}".format(cmdr)
-            response = requests.get(url)
-            json_data = response.json()
-            this.status['text'] = "You Have sold {:,.0f} credits in total so far today".format(json_data['ExplorationTodayTotal'])
-
-        if "explo week" in entry['Message']:
-            url = "http://forthemug.com:4567/exploweek.json/{}".format(cmdr)
-            response = requests.get(url)
-            json_data = response.json()
-            this.status['text'] = "You Have sold {:,.0f} credits in total so far this week".format(
-                float(json_data['ExplorationWeekTotal']))
-
-        if "explo total" in entry['Message']:
-            url = "http://forthemug.com:4567/explototal.json/{}".format(cmdr)
-            response = requests.get(url)
-            json_data = response.json()
-            test = str("{:,.0f}".format(json_data['ExplorationTotal']))
-            this.status['text'] = "You Have sold {:,.0f} credits in Exploration Data so far".format(float(test))
-
-        if "missions today" in entry['Message']:
-            url = "http://forthemug.com:4567/missionday.json/{}".format(cmdr)
-            response = requests.get(url)
-            json_data = response.json()
-            this.status['text'] = "You Have earned {:,.0f} mission points today".format(float(json_data['MissionDayTotal']))
-
-        if "missions week" in entry['Message']:
-            url = "http://forthemug.com:4567/missionweek.json/{}".format(cmdr)
-            response = requests.get(url)
-            json_data = response.json()
-            this.status['text'] = "You Have earned {:,.0f} mission points this week".format(float(json_data['MissionWeekTotal']))
-
-        if "missions total" in entry['Message']:
-            url = "http://forthemug.com:4567/missiontotal.json/{}".format(cmdr)
-            response = requests.get(url)
-            json_data = response.json()
-            this.status['text'] = "You Have earned {:,.0f} mission points in total so far".format(float(json_data['MissionTotal']))
-
-        if "cargo buy today" in entry['Message']:
-            url = "http://forthemug.com:4567/cargoboughttoday.json/{}".format(cmdr)
-            response = requests.get(url)
-            json_data = response.json()
-            this.status['text'] = "You have bought {:,.0f} units of cargo today".format(float(json_data['CargoBuyToday']))
-
-        if "cargo buy week" in entry['Message']:
-            url = "http://forthemug.com:4567/cargoboughtweek.json/{}".format(cmdr)
-            response = requests.get(url)
-            json_data = response.json()
-            this.status['text'] = "You have bought {:,.0f} units of cargo this week".format(float(json_data['CargoBuyWeek']))
-
-        if "cargo buy total" in entry['Message']:
-            url = "http://forthemug.com:4567/cargoboughttotal.json/{}".format(cmdr)
-            response = requests.get(url)
-            json_data = response.json()
-            this.status['text'] = "You have bought {:,.0f} units of cargo in total".format(float(json_data['CargoBuyTotal']))
-
-        if "cargo sell today" in entry['Message']:
-            url = "http://forthemug.com:4567/cargosoldtoday.json/{}".format(cmdr)
-            response = requests.get(url)
-            json_data = response.json()
-            this.status['text'] = "You have sold {:,.0f} units of cargo today".format(float(json_data['CargoSellToday']))
-
-        if "cargo sell week" in entry['Message']:
-            url = "http://forthemug.com:4567/cargosoldweek.json/{}".format(cmdr)
-            response = requests.get(url)
-            json_data = response.json()
-            this.status['text'] = "You have sold {:,.0f} units of cargo this week".format(float(json_data['CargoSellWeek']))
-
-        if "cargo sell total" in entry['Message']:
-            url = "http://forthemug.com:4567/cargosoldtotal.json/{}".format(cmdr)
-            response = requests.get(url)
-            json_data = response.json()
-            this.status['text'] = "You have sold {:,.0f} units of cargo in total".format(float(json_data['CargoSellTotal']))
-
-        if "combat today" in entry['Message']:
-            url = "http://forthemug.com:4567/combatbondstoday.json/{}".format(cmdr)
-            response = requests.get(url)
-            json_data = response.json()
-            this.status['text'] = "You have redeemed {:,.0f} credits today".format(float(json_data['CombatBondsToday']))
-
-        if "combat week" in entry['Message']:
-            url = "http://forthemug.com:4567/combatbondsweek.json/{}".format(cmdr)
-            response = requests.get(url)
-            json_data = response.json()
-            this.status['text'] = "You have redeemed {:,.0f} credits this week".format(float(json_data['CombatBondsWeek']))
-
-        if "combat total" in entry['Message']:
-            url = "http://forthemug.com:4567/combatbondstotal.json/{}".format(cmdr)
-            response = requests.get(url)
-            json_data = response.json()
-            this.status['text'] = "You have redeemed {:,.0f} credits in total".format(float(json_data['CombatBondsTotal']))
-
-        if "bounty today" in entry['Message']:
-            url = "http://forthemug.com:4567/bountytoday.json/{}".format(cmdr)
-            response = requests.get(url)
-            json_data = response.json()
-            this.status['text'] = "You have redeemed {:,.0f} credits today".format(float(json_data['BountyToday']))
-
-        if "bounty week" in entry['Message']:
-            url = "http://forthemug.com:4567/bountyweek.json/{}".format(cmdr)
-            response = requests.get(url)
-            json_data = response.json()
-            this.status['text'] = "You have redeemed {:,.0f} credits this week".format(float(json_data['BountyWeek']))
-
-        if "bounty total" in entry['Message']:
-            url = "http://forthemug.com:4567/bountytotal.json/{}".format(cmdr)
-            response = requests.get(url)
-            json_data = response.json()
-            this.status['text'] = "You have redeemed {:,.0f} credits in total".format(float(json_data['BountyTotal']))
-
-        if "jumps today" in entry['Message']:
-            url = "http://forthemug.com:4567/jumpstoday.json/{}".format(cmdr)
-            response = requests.get(url)
-            json_data = response.json()
-            this.status['text'] = "You have jumped {:,.0f} times today".format(float(json_data['JumpsToday']))
-
-        if "jumps week" in entry['Message']:
-            url = "http://forthemug.com:4567/jumpsweek.json/{}".format(cmdr)
-            response = requests.get(url)
-            json_data = response.json()
-            this.status['text'] = "You have jumped {:,.0f} times this week".format(float(json_data['JumpsWeek']))
-
-        if "jumps total" in entry['Message']:
-            url = "http://forthemug.com:4567/jumpstotal.json/{}".format(cmdr)
-            response = requests.get(url)
-            json_data = response.json()
-            this.status['text'] = "You have jumped {:,.0f} times in total".format(float(json_data['JumpsTotal']))
-
-        if "ly today" in entry['Message']:
-            url = "http://forthemug.com:4567/lytoday.json/{}".format(cmdr)
-            response = requests.get(url)
-            json_data = response.json()
-            this.status['text'] = "You have jumped {:,.2f} Light Years today".format(float(json_data['LYToday']))
-
-        if "ly week" in entry['Message']:
-            url = "http://forthemug.com:4567/lyweek.json/{}".format(cmdr)
-            response = requests.get(url)
-            json_data = response.json()
-            this.status['text'] = "You have jumped {:,.2f} Light Years this week".format(float(json_data['LYWeek']))
-
-        if "ly total" in entry['Message']:
-            url = "http://forthemug.com:4567/lytotal.json/{}".format(cmdr)
-            response = requests.get(url)
-            json_data = response.json()
-            this.status['text'] = "You have jumped {:,.2f} Light Years in total".format(float(json_data['LYTotal']))
-
-        if "scan today" in entry['Message']:
-            url = "http://forthemug.com:4567/scantoday.json/{}".format(cmdr)
-            response = requests.get(url)
-            json_data = response.json()
-            this.status['text'] = "You have scanned {:,.0f} objects today".format(float(json_data['ScanToday']))
-
-        if "scan week" in entry['Message']:
-            url = "http://forthemug.com:4567/scanweek.json/{}".format(cmdr)
-            response = requests.get(url)
-            json_data = response.json()
-            this.status['text'] = "You have scanned {:,.0f} objects this week".format(float(json_data['ScanWeek']))
-
-        if "scan total" in entry['Message']:
-            url = "http://forthemug.com:4567/scantotal.json/{}".format(cmdr)
-            response = requests.get(url)
-            json_data = response.json()
-            this.status['text'] = "You have scanned {:,.0f} objects in total".format(float(json_data['ScanTotal']))
+        # VERY special handling, with NONE of the automatic stuff above:
 
         if "my hutton run" in entry['Message']:
-            url = "http://forthemug.com:4567/myhuttonrun.json/{}".format(cmdr)
-            response = requests.get(url)
-            json_data = response.json()
-            if json_data['SecondCount'] == "0":
+            json_data = xmit.get('/myhuttonrun.json/{}'.format(cmdr))
+            if not json_data:
+                this.status['text'] = "Failed to get Hutton Run data."
+            elif json_data['SecondCount'] == "0":
                 this.status['text'] = "You have not completed a Hutton Run"
             else:
                 this.status['text'] = "Your best Hutton Run is {}".format(json_data['TravelTime'])
 
-        if "best hutton run" in entry['Message']:
-            url = "http://forthemug.com:4567/besthuttonrun.json/{}".format(cmdr)
-            response = requests.get(url)
-            json_data = response.json()
-            this.status['text'] = "BEST Hutton Run is CMDR {} in {}".format(json_data['commandername'], json_data['TravelTime'])
-
         if "!shoutout" in entry['Message']:
-            url = "http://forthemug.com:4567/shoutout.json/"
-            response = requests.get(url)
-            json_data = response.json()
-            if json_data['online'] == "true":
+            json_data = xmit.get('/shoutout.json')
+            if not json_data:
+                this.status['text'] = "Could not shout, shout, or let it all out."
+            elif json_data['online'] == "true":
                 this.status['text'] = "Shoutout sent to the LIVE DJ"
-                url_transmit_shoutout = 'http://forthemug.com:4567/shoutout'
-                headers = COMPRESSED_OCTET_STREAM
-                response = requests.post(url_transmit_shoutout, data=transmit_json, headers=headers, timeout=7)
+                xmit_event('/shoutout')
             if json_data['online'] == "false":
                 this.status['text'] = "There is no LIVE DJ at the moment... please try again later"
 
-    if entry['event'] == 'CommunityGoal':
-        # print ('CG updating')
-        for goal in entry['CurrentGoals']:
-
-            if not goal['IsComplete']: # v0.2Collect Active CG only
-                # First Extract CG Data
-                cg_id = goal['CGID']
-                cg_title = goal['Title']
-                cg_total = goal['CurrentTotal']
-                cg_contributors = goal['NumContributors']
-                cg_contribution = goal['PlayerContribution']
-                cg_percentile_band = goal['PlayerPercentileBand']
-
-                # Build the Data Set to Submit, based on the Entry field number from the form.
-                form_data = {
-                    'entry.1465819909': cg_id,
-                    'entry.2023048714': cg_title,
-                    'entry.617265888': cg_total,
-                    'entry.1469183421': cg_contributors,
-                    'entry.2011125544': cg_contribution,
-                    'entry.1759162752': cg_percentile_band
-                }
-                url = "https://docs.google.com/forms/d/e/1FAIpQLScJHvd9MNKMMNGpjZtlcT74u6Wnhcgesqz38a8JWBC94Se2Dg/formResponse"
-
-                # Request URl as a POST with the Form URL plus send the Form Data to each entry.
-                try:
-                    response = requests.post(url, data=form_data)
-                    if response.status_code == 200:
-                        # print ('URL Success')
-                        this.msg = 'CG Post Success'
-                    else:
-                        # print ('URL Fail' + str(r.status_code))
-                        this.msg = 'CG Post Failed'
-                except Exception: # pylint: disable=W0703
-                    this.msg = 'CG Post Exception'
-
 
 def cmdr_data(data, is_beta):
-    """
-    Obtained new data from Frontier about our commander, location and ships
-    :param data:
-    :return:
-    """
-    explo_credits(data.get('commander').get('name'))
+    "Called shortly after startup with a dump of information from Frontier."
+
     if not is_beta:
-        cmdr_data.last = data
-        # this.status['text'] = "Got new data ({} chars)".format(len(str(data)))
-        sys.stderr.write("Got new data ({} chars)\n".format(len(str(data))))
-        data2 = json.dumps(data)
-        transmit_json = zlib.compress(data2)
-        url_transmit_dock = 'http://forthemug.com:4567/docked'
-        headers = COMPRESSED_OCTET_STREAM
-        _response = requests.post(url_transmit_dock, data=transmit_json, headers=headers, timeout=7)
-        cmdr_data.last = None
+        transmit_json = zlib.compress(json.dumps(data))
+        xmit.post('/docked', parse=False, data=transmit_json, headers=xmit.COMPRESSED_OCTET_STREAM)
+
+    for plugin in this.plugins:
+        try:
+            plugin.cmdr_data(data, is_beta)
+        except:
+            PANIC("{}.cmdr_data".format(plugin))
 
 
 def plugin_stop():
-    """
-    EDMC is closing
-    """
+    "Called once at shutdown."
+
     print "Farewell cruel world!"
+    for plugin in this.plugins:
+        try:
+            plugin.plugin_stop()
+        except:
+            PANIC("{}.plugin_stop".format(plugin))
+
+
+def dashboard_entry(cmdr, is_beta, entry):
+    "Called anywhere up to once a second with flight telemetry."
+
+    for plugin in this.plugins:
+        try:
+            plugin.dashboard_entry(cmdr, is_beta, entry)
+        except:
+            PANIC("{}.dashboard_entry".format(plugin))
