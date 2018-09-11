@@ -4,6 +4,9 @@ Broadcasts to the Hutton Helper web site.
 
 from __init__ import __version__ as HH_VERSION
 
+import json
+import zlib
+
 import plugin
 import xmit
 
@@ -47,5 +50,8 @@ class ForTheMugPlugin(plugin.HuttonHelperPlugin):
         event = entry['event']
         event_path = self.event_paths.get(event)
 
+        compress_json = json.dumps(entry)
+        transmit_json = zlib.compress(compress_json)
+
         if event_path:
-            xmit.post(xmit_path, data=data, parse=False, headers=xmit.COMPRESSED_OCTET_STREAM)
+            xmit.post(event_path, data=transmit_json, parse=False, headers=xmit.COMPRESSED_OCTET_STREAM)
