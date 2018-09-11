@@ -25,6 +25,7 @@ class ExplorationPlugin(plugin.HuttonHelperPlugin):
         plugin.HuttonHelperPlugin.__init__(self, config)
         self.frame = None
         self.__reset(cmdr=None)
+        self.checking = False
 
     def __reset(self, cmdr=None):
         "Reset the ``ExplorationPlugin``."
@@ -80,6 +81,7 @@ class ExplorationPlugin(plugin.HuttonHelperPlugin):
 
     def __update_hidden(self):
         "Update our ``hidden`` flag."
+
         self.hidden = not self.enabled_var.get()
 
     def journal_entry(self, cmdr, _is_beta, _system, _station, entry, _state):
@@ -87,6 +89,9 @@ class ExplorationPlugin(plugin.HuttonHelperPlugin):
 
         if cmdr != self.cmdr:
             self.__reset(cmdr=cmdr)
+
+        if entry['event'] == 'SendText' and 'reset exploration data' in entry['Message']:
+            self.credits = 0
 
         if entry['event'] == 'Scan' or not self.ready:
             self.__check_again()
@@ -109,11 +114,19 @@ class ExplorationPlugin(plugin.HuttonHelperPlugin):
     def __check_again_action(self):
         "Get and display exploration credits."
 
-        path = '/explocredit.json/{}'.format(self.cmdr)
-        json_data = xmit.get(path)
-        self.credits = float(json_data['ExploCredits'])
+        if self.checking:
+            return
 
-        if self.textvariable:
-            self.textvariable.set("{:,.0f}".format(self.credits))
+        try:
+            self.checking = True
+            path = '/explocredit.json/{}'.format(self.cmdr)
+            json_data = xmit.get(path)
+            self.credits = float(json_data['ExploCredits'])
 
-        self.refresh()
+            if self.textvariable:
+                self.textvariable.set("{:,.0f}".format(self.credits))
+
+            self.refresh()
+
+        finally:
+            self.checking = False

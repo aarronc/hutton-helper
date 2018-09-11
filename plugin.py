@@ -8,11 +8,12 @@ Each is almost an EDMC plugin in its own right.
 class HuttonHelperHelper(object):
     "A support object for a Hutton Helper plugin."
 
-    def __init__(self, config, refresh):
+    def __init__(self, config, refresh, status):
         "Initialise the ``HuttonHelperHelper``."
 
         self.config = config
         self.refresh = refresh
+        self.status = status
 
 
 class HuttonHelperPlugin(object):
@@ -83,3 +84,13 @@ class HuttonHelperPlugin(object):
     def config(self):
         "Return our configuration object."
         return self.helper.config
+
+    @property
+    def get_status(self):
+        "Get the status via the helper."
+        return self.helper.status['text']
+
+    @get_status.setter
+    def set_status(self, text):
+        "Set the status via the helper."
+        self.helper.status['text'] = text

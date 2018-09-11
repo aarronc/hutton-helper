@@ -21,8 +21,11 @@ import tkMessageBox
 import requests # still here for CG code
 
 # Internal plugins and utilities:
+import cgt
 import cover
 import exploration
+import forward
+import local
 import news
 import plugin as plugin_module
 import progress
@@ -47,13 +50,16 @@ def PANIC(description=None):
 def plugin_start():
     "Initialise the Hutton Helper plugin."
 
-    this.helper = plugin_module.HuttonHelperHelper(config, _refresh)
+    this.helper = plugin_module.HuttonHelperHelper(config, _refresh, _status)
     this.updater = updater.UpdatePlugin(this.helper)  # get a reference only if you need one
     this.plugins = [
         # A list of plugins to which we pass events.
         this.updater,
         progress.ProgressPlugin(this.helper),
-        exploration.ExplorationPlugin(this.helper)
+        exploration.ExplorationPlugin(this.helper),
+        cgt.CommunityGoalWatcher(this.helper),
+        forward.ForTheMugPlugin(this.helper),
+        local.CommandPlugin(this.helper)
     ]
 
     for plugin in plugins:
@@ -165,6 +171,12 @@ def _refresh():
     _show_front_cover(not any_ready)
 
 
+def _status(text=''):
+    "Set the status text."
+
+    this.status['text'] = text
+
+
 def plugin_prefs(parent, cmdr, is_beta):
     "Called each time the user opens EDMC settings. Return an ``nb.Frame``."
 
@@ -199,36 +211,6 @@ def prefs_changed(cmdr, is_beta):
 
     _refresh()
 
-
-EVENT_XMIT_PATHS = {
-    'Bounty': '/bounty',
-    'Cargo': '/cargo',
-    'CargoDepot': '/cargodepot',
-    'CollectCargo': '/cargocollection',
-    'CommunityGoal': '/communitygoal',
-    'Died': '/death',
-    'Docked': '/dockedinfoupdate',
-    'FactionKillBond': '/factionkillbond',
-    'FSDJump': '/fsdjump',
-    'LoadGame': '/loadgame',
-    'Loadout': '/loadout',
-    'MarketBuy': '/buy',
-    'MarketSell': '/sell',
-    'MissionAbandoned': '/missioncomplete',
-    'MissionAccepted': '/missiontake',
-    'MissionCompleted': '/missioncomplete',
-    'MissionFailed': '/missioncomplete',
-    'MissionRedirected': '/missionupdate',
-    'NpcCrewPaidWage': '/npccrewpaidwage',
-    'Promotion': '/cmdrpromotion',
-    'Rank': '/rank',
-    'Scan': '/scan',
-    'SellExplorationData': '/explorationdata',
-    'Statistics': '/stats',
-    'SupercruiseEntry': '/supercruiseentry',
-    'SupercruiseExit': '/supercruiseexit',
-    'Undocked': '/undockedinfoupdate',
-}
 
 EVENT_STATUS_FORMATS = {
     'CargoDepot': "Wing Mission Info updated",
@@ -265,49 +247,6 @@ REDEEM_TYPE_STATUS_FORMATS = {
     'trade': "{:,.0f} credits earned from trade voucher",
 }
 
-COMMAND_XMIT_PATHS = {
-    'mission close': '/missionreset',
-    'tick update': '/tickupdate',
-    'TLDR': '/tldr',
-    'COLBRIEF': '/tldrcol',
-    'stateupdate': '/state',
-    'recheck system': '/recheckinfluence',
-    'generalupdate': '/dailygeneral',
-    'coloniaupdate': '/colstate',
-    'race start': '/racestart',
-    'race end': '/raceend',
-    'exploration start': '/explostart',
-    'reset exploration data': '/exploreset',
-    'inf reload': '/devinfreload',
-    'allow list reload': '/devallowreload',
-    'black ops add': '/blopsadd',
-    'black ops active': '/silentrunning',
-    'black ops reset': '/normalrunning',
-    'auth list reload': '/authlistreload',
-    'explo system': '/explosystem.json/{cmdr}/{system}',
-    'best hutton run': '/besthuttonrun.json/{cmdr}'
-}
-
-COMMAND_STATUS_FORMATS = {
-    # OPTIONAL unless there's no matching COMMAND_XMIT_PATHS entry above
-    'TLDR': "Sent TLDR update Command",
-    'COLBRIEF': "Sent TLDR update Colonia Command",
-    'recheck system': "Forced System Re-check of {system} on next jump in",
-    'race start': "Sent Race START info",
-    'race end': "Sent Race END info",
-    'reset exploration data': "Reset your Exploration 2.0 Data",
-    'inf reload': "Developer Mode : inf reload command sent",
-    'allow list reload': "Developer Mode : allow list reload command sent",
-    'black ops add': "Admin Mode : Black Ops Faction Added",
-    'black ops active': "Black ops Mode : Enjoy Being Naughty Commander",
-    'black ops reset': "Black ops Mode : Welcome back Commander",
-    'auth list reload': "Admin Mode : Reloaded Auth List",
-    'explo system': "You Have sold {ExplorationSystemTotal:,.0f} credits in {system} today",
-    'best hutton run': "BEST Hutton Run is CMDR {commandername} in {TravelTime}",
-}
-
-COMMANDS = set(COMMAND_XMIT_PATHS.keys()) | set(COMMAND_STATUS_FORMATS.keys())
-
 
 def journal_entry(cmdr, is_beta, system, station, entry, state):
     """
@@ -342,11 +281,6 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
         path = path.format(cmdr=cmdr, system=system)
         return xmit.post(path, data=transmit_json, headers=xmit.COMPRESSED_OCTET_STREAM)
 
-    # If we can find an entry in XMIT_PATHS, send the event to the server at the required path:
-    xmit_path = EVENT_XMIT_PATHS.get(event)
-    if xmit_path:
-        xmit_event(xmit_path)
-
     # If we can find an entry in STATUS_FORMATS, fill in the string and display it to the user:
     status_format = EVENT_STATUS_FORMATS.get(event)
     if status_format:
@@ -370,44 +304,6 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
     elif event == 'MarketSell':
         this.status['text'] = "{:,.0f} {} sold".format(float(entry['Count']), entry['Type'])
 
-    elif event == 'CommunityGoal':
-        # For some events, we need custom transmission logic, e.g. to the Community Goal Reward Thresholds Calculator:
-
-        for goal in entry['CurrentGoals']:
-
-            if not goal['IsComplete']: # v0.2Collect Active CG only
-                # First Extract CG Data
-                cg_id = goal['CGID']
-                cg_title = goal['Title']
-                cg_total = goal['CurrentTotal']
-                cg_contributors = goal['NumContributors']
-                cg_contribution = goal['PlayerContribution']
-                cg_percentile_band = goal['PlayerPercentileBand']
-
-                # Build the Data Set to Submit, based on the Entry field number from the form.
-                form_data = {
-                    'entry.1465819909': cg_id,
-                    'entry.2023048714': cg_title,
-                    'entry.617265888': cg_total,
-                    'entry.1469183421': cg_contributors,
-                    'entry.2011125544': cg_contribution,
-                    'entry.1759162752': cg_percentile_band
-                }
-                url = "https://docs.google.com/forms/d/e/1FAIpQLScJHvd9MNKMMNGpjZtlcT74u6Wnhcgesqz38a8JWBC94Se2Dg/formResponse"
-
-                # Request URl as a POST with the Form URL plus send the Form Data to each entry.
-                try:
-                    response = requests.post(url, data=form_data)
-                    if response.status_code == 200:
-                        # print ('URL Success')
-                        this.msg = 'CG Post Success'
-                    else:
-                        # print ('URL Fail' + str(r.status_code))
-                        this.msg = 'CG Post Failed'
-
-                except: # pylint: disable=W0702
-                    this.msg = 'CG Post Exception'
-
     elif event == 'FactionKillBond':
         this.status['text'] = "Kill Bond Earned for {:,.0f} credits".format(float(entry['Reward']))
 
@@ -429,65 +325,6 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
         bonusval = entry['Bonus']
         totalvalue = baseval + bonusval
         this.status['text'] = "Sold ExplorationData for {:,.0f} credits".format(float(totalvalue))
-
-    elif event == 'SendText': # pylint: disable=R1702
-        # Another lookup table, this time a little odder.
-        for command in COMMANDS:
-            if command in entry['Message']:
-                # Get the status format:
-                command_status_format = COMMAND_STATUS_FORMATS.get(command)
-                if not command_status_format:
-                    command_status_format = 'Sent {command} Command'
-
-                # Send the event if required, getting json_data back:
-                json_data = None
-                command_xmit_path = COMMAND_XMIT_PATHS.get(command)
-                if command_xmit_path:
-                    command_xmit_path = command_xmit_path.format(cmdr=cmdr, system=system)
-                    if '{cmdr}' in command_xmit_path: # FILTHY hack to figure out if it's a 'get'
-                        json_data = xmit.get(command_xmit_path)
-                    else:
-                        json_data = xmit.post(command_xmit_path, data=transmit_json, headers=xmit.COMPRESSED_OCTET_STREAM)
-
-                if not json_data:
-                    command_status_format = 'Failed to Send {command} Command'
-
-                # Format and display the status text:
-                print "Filling in: {}".format(command_status_format)
-                this.status['text'] = command_status_format.format(
-                    # Add variables here that you'd like to use in your status text:
-                    command=command,
-                    system=system,
-                    # We also supply the server's reply:
-                    **(json_data or {})
-                )
-
-                # Special handling
-                # ONLY performed if there's ALSO an entry in COMMAND_XMIT_PATHS or COMMAND_STATUS_FORMATS:
-
-                if command == 'reset exploration data':
-                    this.exploration_display.explo_credits(cmdr)
-
-        # VERY special handling, with NONE of the automatic stuff above:
-
-        if "my hutton run" in entry['Message']:
-            json_data = xmit.get('/myhuttonrun.json/{}'.format(cmdr))
-            if not json_data:
-                this.status['text'] = "Failed to get Hutton Run data."
-            elif json_data['SecondCount'] == "0":
-                this.status['text'] = "You have not completed a Hutton Run"
-            else:
-                this.status['text'] = "Your best Hutton Run is {}".format(json_data['TravelTime'])
-
-        if "!shoutout" in entry['Message']:
-            json_data = xmit.get('/shoutout.json')
-            if not json_data:
-                this.status['text'] = "Could not shout, shout, or let it all out."
-            elif json_data['online'] == "true":
-                this.status['text'] = "Shoutout sent to the LIVE DJ"
-                xmit_event('/shoutout')
-            if json_data['online'] == "false":
-                this.status['text'] = "There is no LIVE DJ at the moment... please try again later"
 
 
 def cmdr_data(data, is_beta):

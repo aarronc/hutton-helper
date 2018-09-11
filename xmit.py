@@ -59,7 +59,9 @@ def request(path_or_url, base=XMIT_URL, method='get', parse=True, **kwargs):
         elif response.status_code == 204:
             return ''
 
-        sys.stderr.write('{}\r\n'.format(response.text))
+        sys.stderr.write(repr(response.content))
+        sys.stderr.write('\r\n')
+
         return None
 
     except Exception:
