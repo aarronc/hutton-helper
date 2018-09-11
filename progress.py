@@ -162,9 +162,12 @@ class ProgressDisplay(tk.Frame):
         if any_has_progress:
             self.footer_label.grid_forget()
             for column, label in enumerate(self.heading_labels):
-                label.grid(row=footer_row, column=column, sticky=tk.EW)
+                label.grid(row=0, column=column, sticky=tk.EW)
 
         else:
+            for label in self.heading_labels:
+                label.grid_forget()
+
             if self.data:
                 self.footer_label['text'] = "No progress this week. Get truckin'!"
 

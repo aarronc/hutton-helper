@@ -29,7 +29,7 @@ class HuttonNews(HyperlinkLabel):
             anchor=tk.NW
         )
 
-        self.after(5, self.news_update)
+        self.after(250, self.news_update)
 
     def news_update(self):
         "Update the news."

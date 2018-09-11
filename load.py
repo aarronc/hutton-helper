@@ -6,6 +6,7 @@ import json
 import os
 import sys
 import textwrap
+import time
 import Tkinter as tk
 import traceback
 import ttk
@@ -31,6 +32,8 @@ import xmit
 
 this = sys.modules[__name__]  # pylint: disable=C0103
 this.msg = ""
+
+FRONT_COVER_DELAY = 5  # seconds
 
 
 def PANIC(description=None):
@@ -109,19 +112,40 @@ def plugin_app(parent):
     # Add the front cover
     this.front_cover_row = row
     this.front_cover = cover.FrontCover(frame)
-    row = row + 1
+    _show_front_cover(True)
 
-    # Configure the grid for everything above
-    _refresh()
+    # Arrange for the front cover to be shown for at least a few seconds
+    this.front_cover_until = time.time() + FRONT_COVER_DELAY
+    frame.after(1000 * FRONT_COVER_DELAY, _refresh)
+    frame.after_idle(_refresh)
 
     # Add the toolbar
-    toolbar.HuttonToolbar(frame).grid(row=row, pady=pady, sticky=sticky)
+    toolbar.HuttonToolbar(frame).grid(row=row + 1, pady=pady, sticky=sticky)
 
     return frame
 
 
+def _show_front_cover(show=True):
+    "Show the front cover."
+
+    if show:
+        this.front_cover.grid(
+            row=this.front_cover_row,
+            column=0,
+            sticky=tk.EW,
+            padx=10,
+            pady=10
+        )
+
+    else:
+        this.front_cover.grid_forget()
+
+
 def _refresh():
     "Hide or unhide plugins based on their ``hidden`` flag."
+
+    if time.time() < this.front_cover_until:
+        return
 
     any_ready = False
 
@@ -138,17 +162,7 @@ def _refresh():
                 any_ready = True
                 plugin_frame.grid(row=plugin_row, sticky=tk.EW)
 
-    # Second, the front cover we display if no plugins are enabled AND ready:
-    if any_ready:
-        this.front_cover.grid_forget()
-    else:
-        front_cover.grid(
-            row=this.front_cover_row,
-            column=0,
-            sticky=tk.EW,
-            padx=10,
-            pady=10
-        )
+    _show_front_cover(not any_ready)
 
 
 def plugin_prefs(parent, cmdr, is_beta):
