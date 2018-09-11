@@ -143,3 +143,10 @@ To resume development:
 [HH]: https://github.com/aarronc/hutton-helper
 [VSCode]: https://code.visualstudio.com/
 [EditorConfig]: https://editorconfig.org/
+
+## Release
+
+    del *.zip
+    python pack.py
+
+... then upload the `.zip` file and `version.json` to the release directory.
