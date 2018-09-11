@@ -128,8 +128,8 @@ class ProgressDisplay(tk.Frame):
             for column, when in enumerate(COLUMNS, start=1):
                 key = varname(varbase, when)
 
-                if data and key in data:
-                    value = float(data[key])
+                if self.data and key in self.data:
+                    value = float(self.data[key])
                     has_progress = not not value
 
                 else:
