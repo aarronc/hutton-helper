@@ -125,7 +125,7 @@ class ExplorationPlugin(plugin.HuttonHelperPlugin):
             self.credits = float(json_data['ExploCredits'])
 
             if self.textvariable:
-                self.textvariable.set("{:,.0f}".format(self.credits))
+                self.textvariable.set("at least {:,.0f}".format(self.credits))
 
             self.refresh()
 
