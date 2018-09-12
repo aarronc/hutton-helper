@@ -91,10 +91,10 @@ def plugin_app(parent):
         underline=False,
         anchor=anchor,
     ).grid(row=0, column=0, sticky=sticky)
-    this.status = tk.Label(table, anchor=anchor, text="For the Mug!")
+    this.status = ttk.Label(table, anchor=anchor, text="For the Mug!")
     this.status.grid(row=0, column=1, sticky=sticky)
 
-    tk.Label(table, anchor=anchor, text="News:").grid(row=1, column=0, sticky=sticky)
+    ttk.Label(table, anchor=anchor, text="News:").grid(row=1, column=0, sticky=sticky)
     news.HuttonNews(table).grid(row=1, column=1, sticky=sticky)
 
     this.plugin_rows = {}
