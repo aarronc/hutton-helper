@@ -122,7 +122,7 @@ class ProgressDisplay(tk.Frame):
         sticky = tk.EW
 
         for idx, (_title, varbase, configvar) in enumerate(ROW_CONFIGURATION):
-            enabled = self.helper.config.getint(configvar)
+            enabled = self.helper.prefs.setdefault(configvar, True)
             row_visible = False
 
             for column, when in enumerate(COLUMNS, start=1):
@@ -244,13 +244,13 @@ class ProgressPlugin(plugin.HuttonHelperPlugin):
     def __initialise_prefs(self):
         "Initialise the preference system."
 
-        self.prefs_vars = {}
+        self.prefs_intvars = {}
         all_disabled = True
 
         for key, text in self.config_intvars:
-            enabled = self.config.getint(key)
+            enabled = self.helper.prefs.setdefault(key, True)
             all_disabled = all_disabled and not enabled
-            self.prefs_vars[key] = variable = tk.IntVar(value=enabled)
+            self.prefs_intvars[key] = tk.IntVar(value=1 if enabled else 0)
 
         self.hidden = all_disabled
 
@@ -262,7 +262,7 @@ class ProgressPlugin(plugin.HuttonHelperPlugin):
         nb.Label(frame, text="Progress Display Options :-").grid(sticky=tk.W)
 
         for key, text in self.config_intvars:
-            variable = self.prefs_vars[key]
+            variable = self.prefs_intvars[key]
             nb.Checkbutton(frame, text=text, variable=variable).grid(sticky=tk.W)
 
         return frame
@@ -272,9 +272,9 @@ class ProgressPlugin(plugin.HuttonHelperPlugin):
 
         all_disabled = True
         for key, _text in self.config_intvars:
-            enabled = self.prefs_vars[key].get()
-            all_disabled = all_disabled and not enabled
-            self.config.set(key, enabled)
+            value = self.prefs_intvars[key].get()
+            all_disabled = all_disabled and not value
+            self.helper.prefs[key] = bool(value)
 
         self.hidden = all_disabled
         self.ready = self.display.update()

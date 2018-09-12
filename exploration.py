@@ -13,7 +13,7 @@ import xmit
 import myNotebook as nb
 
 
-SHOW_EXPLORATION_VALUE = 'ShowExploValue'
+CFG_SHOW_EXPLORATION = 'ShowExploValue'
 
 
 class ExplorationPlugin(plugin.HuttonHelperPlugin):
@@ -51,8 +51,8 @@ class ExplorationPlugin(plugin.HuttonHelperPlugin):
         tk.Label(frame, text="UNSOLD exploration credits:", anchor=tk.NW).grid(row=0, column=0, sticky=tk.NW)
         tk.Label(frame, textvariable=self.textvariable, anchor=tk.NE).grid(row=0, column=1, sticky=tk.NE)
 
-        enabled = self.config.getint(SHOW_EXPLORATION_VALUE)
-        self.enabled_var = tk.IntVar(value=enabled)
+        enabled = self.helper.prefs.setdefault(CFG_SHOW_EXPLORATION, False)
+        self.enabled_intvar = tk.IntVar(value=1 if enabled else 0)
         self.__update_hidden()
 
         return self.frame
@@ -67,7 +67,7 @@ class ExplorationPlugin(plugin.HuttonHelperPlugin):
         nb.Checkbutton(
             prefs_frame,
             text="Show UNSOLD Exploration Credits",
-            variable=self.enabled_var
+            variable=self.enabled_intvar
         ).grid(row=1, column=0, sticky=tk.W)
 
         self.prefs_changed(cmdr, is_beta)
@@ -76,13 +76,13 @@ class ExplorationPlugin(plugin.HuttonHelperPlugin):
     def prefs_changed(self, cmdr, is_beta):
         "Called when the user clicks OK on the settings dialog."
 
-        self.config.set(SHOW_EXPLORATION_VALUE, self.enabled_var.get())
+        self.helper.prefs[CFG_SHOW_EXPLORATION] = bool(self.enabled_intvar.get())
         self.__update_hidden()
 
     def __update_hidden(self):
         "Update our ``hidden`` flag."
 
-        self.hidden = not self.enabled_var.get()
+        self.hidden = not self.enabled_intvar.get()
 
     def journal_entry(self, cmdr, _is_beta, _system, _station, entry, _state):
         "Act like a tiny EDMC plugin."
