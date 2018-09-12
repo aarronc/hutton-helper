@@ -154,7 +154,8 @@ class UpdatePlugin(plugin.HuttonHelperPlugin):
     def plugin_app(self, parent):
         "Called once to get the plugin widget. Return a ``tk.Frame``."
 
-        parent.after_idle(self.__fetch_version_info)
+        self.helper.status("Version {} OK".format(HH_VERSION))
+        parent.after(250, self.__fetch_version_info)
 
     def __fetch_version_info(self):
         "Fetch the remote info."
@@ -168,8 +169,6 @@ class UpdatePlugin(plugin.HuttonHelperPlugin):
                     self.__upgrade_action()
                 else:
                     self.helper.status(text)
-            else:
-                self.helper.status("Version {} OK".format(HH_VERSION))
 
     def plugin_prefs(self, parent, cmdr, is_beta):
         "Called to get a tk Frame for the settings dialog."
