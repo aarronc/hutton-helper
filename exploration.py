@@ -3,8 +3,8 @@ Module to provide exploration credit tracking.
 """
 
 import json
-import Tkinter as tk
 import sys
+import Tkinter as tk
 import zlib
 
 import plugin
@@ -24,14 +24,19 @@ class ExplorationPlugin(plugin.HuttonHelperPlugin):
 
         plugin.HuttonHelperPlugin.__init__(self, config)
         self.frame = None
-        self.__reset(cmdr=None)
+        self.cmdr = None
+        self.credits = None
         self.checking = False
 
     def __reset(self, cmdr=None):
         "Reset the ``ExplorationPlugin``."
 
-        self.credits = None
-        self.cmdr = cmdr
+        if cmdr != self.cmdr:
+            self.credits = None
+            self.cmdr = cmdr
+            return True
+
+        return False
 
     @property
     def ready(self):
@@ -87,21 +92,17 @@ class ExplorationPlugin(plugin.HuttonHelperPlugin):
     def journal_entry(self, cmdr, _is_beta, _system, _station, entry, _state):
         "Act like a tiny EDMC plugin."
 
-        if cmdr != self.cmdr:
-            self.__reset(cmdr=cmdr)
-
         if entry['event'] == 'SendText' and 'reset exploration data' in entry['Message']:
             self.credits = 0
 
-        if entry['event'] == 'Scan' or not self.ready:
+        if self.__reset(cmdr=cmdr) or entry['event'] == 'Scan' or not self.ready:
             self.__check_again()
 
     def cmdr_data(self, data, is_beta):
         "Act like a tiny EDMC plugin."
 
-        cmdr = data.get('commander').get('name')
-        self.__reset(cmdr=cmdr)
-        self.__check_again()
+        if self.__reset(cmdr=data.get('commander').get('name')):
+            self.__check_again()
 
     def __check_again(self):
         "Called when we need to check again."
