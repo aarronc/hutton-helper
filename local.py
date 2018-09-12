@@ -90,13 +90,13 @@ class CommandPlugin(plugin.HuttonHelperPlugin):
                     command_status_format = 'Failed to Send {command} Command'
 
                 # Format and display the status text:
-                self.status = command_status_format.format(
+                self.helper.status(command_status_format.format(
                     # Add variables here that you'd like to use in your status text:
                     command=command,
                     system=system,
                     # We also supply the server's reply:
                     **(json_data or {})
-                )
+                ))
 
         # VERY special handling, with NONE of the automatic stuff above:
 
@@ -104,23 +104,23 @@ class CommandPlugin(plugin.HuttonHelperPlugin):
             json_data = xmit.get('/myhuttonrun.json/{}'.format(cmdr))
 
             if not json_data:
-                self.status = "Failed to get Hutton Run data."
+                self.helper.status("Failed to get Hutton Run data.")
 
             elif json_data['SecondCount'] == "0":
-                self.status = "You have not completed a Hutton Run"
+                self.helper.status("You have not completed a Hutton Run")
 
             else:
-                self.status = "Your best Hutton Run is {}".format(json_data['TravelTime'])
+                self.helper.status("Your best Hutton Run is {}".format(json_data['TravelTime']))
 
         if "!shoutout" in entry['Message']:
             json_data = xmit.get('/shoutout.json')
 
             if not json_data:
-                self.status = "Could not shout, shout, or let it all out."
+                self.helper.status("Could not shout, shout, or let it all out.")
 
             elif json_data['online'] == "true":
-                self.status = "Shoutout sent to the LIVE DJ"
+                self.helper.status("Shoutout sent to the LIVE DJ")
                 xmit_event('/shoutout')
 
             if json_data['online'] == "false":
-                self.status = "There is no LIVE DJ at the moment... please try again later"
+                self.helper.status("There is no LIVE DJ at the moment... please try again later")

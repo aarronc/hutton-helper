@@ -154,13 +154,3 @@ class HuttonHelperPlugin(object):
     def config(self):
         "Return our configuration object."
         return self.helper.config
-
-    @property
-    def get_status(self):
-        "Get the status via the helper."
-        return self.helper.status['text']
-
-    @get_status.setter
-    def set_status(self, text):
-        "Set the status via the helper."
-        self.helper.status['text'] = text
