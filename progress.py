@@ -3,6 +3,8 @@ Track the trucker's progress.
 """
 
 import collections
+import datetime
+import math
 import time
 import Tkinter as tk
 
@@ -11,7 +13,7 @@ import xmit
 
 import myNotebook as nb
 
-COLUMNS = ['today', 'week'] # 'total' also works
+COLUMNS = ['day', 'week'] # 'total' also works
 
 ROW_CONFIGURATION = [
     ("Jumps", 'Jumps', 'ShowExploProgress'),
@@ -53,10 +55,16 @@ def render(value):
 def varname(varbase, when):
     "Determine a variable name for the JSON."
 
-    if when is 'today':
-        when = 'day'
-
     return '{}{}'.format(varbase, capitalise(when))
+
+
+def cardinals():
+    "Nobody expects the Spanish Inquisition!"
+
+    delta = (datetime.datetime.utcnow() - datetime.datetime(2015, 11, 23)).total_seconds()
+    week = int(delta / 604800)
+    day = int(math.ceil((delta % 604800) / 86400))
+    return dict(week=week, day=day)
 
 
 class ProgressDisplay(tk.Frame):
@@ -161,8 +169,12 @@ class ProgressDisplay(tk.Frame):
 
         if any_has_progress:
             self.footer_label.grid_forget()
-            for column, label in enumerate(self.heading_labels):
+            self.heading_labels[0].grid(row=0, column=0, sticky=tk.EW)
+            card = cardinals()
+            for column, when in enumerate(COLUMNS, start=1):
+                label = self.heading_labels[column]
                 label.grid(row=0, column=column, sticky=tk.EW)
+                label['text'] = '{} {}'.format(capitalise(when), render(card[when]))
 
         else:
             for label in self.heading_labels:
