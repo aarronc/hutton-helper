@@ -51,10 +51,9 @@ def plugin_start():
     "Initialise the Hutton Helper plugin."
 
     this.helper = plugin_module.HuttonHelperHelper(config, _refresh, _status)
-    this.updater = updater.UpdatePlugin(this.helper)  # get a reference only if you need one
     this.plugins = [
         # A list of plugins to which we pass events.
-        this.updater,
+        updater.UpdatePlugin(this.helper),
         progress.ProgressPlugin(this.helper),
         exploration.ExplorationPlugin(this.helper),
         cgt.CommunityGoalWatcher(this.helper),
@@ -92,7 +91,7 @@ def plugin_app(parent):
         underline=False,
         anchor=anchor,
     ).grid(row=0, column=0, sticky=sticky)
-    this.status = tk.Label(table, anchor=anchor, text=str(this.updater))
+    this.status = tk.Label(table, anchor=anchor, text="For the Mug!")
     this.status.grid(row=0, column=1, sticky=sticky)
 
     tk.Label(table, anchor=anchor, text="News:").grid(row=1, column=0, sticky=sticky)
@@ -272,6 +271,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
     transmit_json = zlib.compress(compress_json)
 
     event = entry['event']
+    sys.stderr.write('event: {}\r\n'.format(event))
 
     # Declare a function to make it easy to send the event to the server and get the response.
     # We've smuggled the transmit_json variable from journal_entry into xmit_event using a

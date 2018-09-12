@@ -4,6 +4,76 @@ Provides base classes for Hutton Helper plugins.
 Each is almost an EDMC plugin in its own right.
 """
 
+import json
+import sys
+import UserDict
+
+
+def add_config_prefix(key):
+    "Transform ``key`` for the EDMC ``config``."
+
+    return 'HuttonHelper{}'.format(key)
+
+
+class HuttonHelperPreferences(UserDict.DictMixin):
+    """
+    Stores Hutton Helper preferences in EDMC config.
+
+    This class pretends to be a normal Python ``dict``. That kind of trick
+    makes this class a little harder to maintain, but makes code that uses
+    it easier to maintain.
+
+    The awful doc-strings come straight from Python.
+
+    Treats ``None`` as equivalent to deletion.
+    """
+
+    old_int_prefs_to_delete = [
+        'ShowExploProgress',
+        'ShowCargoProgress',
+        'ShowMissionProgress',
+        'ShowCombatProgress',
+        'ShowExploValue',
+    ]
+
+    def __init__(self, config):
+        "Initialise the ``HuttonHelperPreferences``."
+
+        self.__config = config
+        self.__prefs = set()
+        for key in self.old_int_prefs_to_delete:
+            self.__config.delete(key)
+
+    def __getitem__(self, pref):
+        "Get a preference."
+
+        value = self.__config.get(add_config_prefix(pref))
+        if value is None:
+            raise KeyError(pref)
+        else:
+            self.__prefs.add(pref)  # Surprise!
+        return json.loads(value)
+
+    def __setitem__(self, pref, value):
+        "Set a preference to a JSON serialisable value."
+
+        if value is None:
+            del self[pref]
+        else:
+            self.__config.set(add_config_prefix(pref), json.dumps(value))
+            self.__prefs.add(pref)
+
+    def __delitem__(self, pref):
+        "Delete a preference."
+
+        self.__prefs.remove(pref)
+        self.__config.delete(add_config_prefix(pref))
+
+    def keys(self):
+        "Return a set of all currently known preferences."
+
+        return self.__prefs.copy()
+
 
 class HuttonHelperHelper(object):
     "A support object for a Hutton Helper plugin."
@@ -11,7 +81,7 @@ class HuttonHelperHelper(object):
     def __init__(self, config, refresh, status):
         "Initialise the ``HuttonHelperHelper``."
 
-        self.config = config
+        self.prefs = HuttonHelperPreferences(config)
         self.refresh = refresh
         self.status = status
 
@@ -84,13 +154,3 @@ class HuttonHelperPlugin(object):
     def config(self):
         "Return our configuration object."
         return self.helper.config
-
-    @property
-    def get_status(self):
-        "Get the status via the helper."
-        return self.helper.status['text']
-
-    @get_status.setter
-    def set_status(self, text):
-        "Set the status via the helper."
-        self.helper.status['text'] = text

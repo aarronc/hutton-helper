@@ -3,8 +3,8 @@ Module to provide exploration credit tracking.
 """
 
 import json
-import Tkinter as tk
 import sys
+import Tkinter as tk
 import zlib
 
 import plugin
@@ -13,7 +13,7 @@ import xmit
 import myNotebook as nb
 
 
-SHOW_EXPLORATION_VALUE = 'ShowExploValue'
+CFG_SHOW_EXPLORATION = 'ShowExploValue'
 
 
 class ExplorationPlugin(plugin.HuttonHelperPlugin):
@@ -24,14 +24,19 @@ class ExplorationPlugin(plugin.HuttonHelperPlugin):
 
         plugin.HuttonHelperPlugin.__init__(self, config)
         self.frame = None
-        self.__reset(cmdr=None)
+        self.cmdr = None
+        self.credits = None
         self.checking = False
 
     def __reset(self, cmdr=None):
         "Reset the ``ExplorationPlugin``."
 
-        self.credits = None
-        self.cmdr = cmdr
+        if cmdr != self.cmdr:
+            self.credits = None
+            self.cmdr = cmdr
+            return True
+
+        return False
 
     @property
     def ready(self):
@@ -51,8 +56,8 @@ class ExplorationPlugin(plugin.HuttonHelperPlugin):
         tk.Label(frame, text="UNSOLD exploration credits:", anchor=tk.NW).grid(row=0, column=0, sticky=tk.NW)
         tk.Label(frame, textvariable=self.textvariable, anchor=tk.NE).grid(row=0, column=1, sticky=tk.NE)
 
-        enabled = self.config.getint(SHOW_EXPLORATION_VALUE)
-        self.enabled_var = tk.IntVar(value=enabled)
+        enabled = self.helper.prefs.setdefault(CFG_SHOW_EXPLORATION, False)
+        self.enabled_intvar = tk.IntVar(value=1 if enabled else 0)
         self.__update_hidden()
 
         return self.frame
@@ -67,7 +72,7 @@ class ExplorationPlugin(plugin.HuttonHelperPlugin):
         nb.Checkbutton(
             prefs_frame,
             text="Show UNSOLD Exploration Credits",
-            variable=self.enabled_var
+            variable=self.enabled_intvar
         ).grid(row=1, column=0, sticky=tk.W)
 
         self.prefs_changed(cmdr, is_beta)
@@ -76,32 +81,28 @@ class ExplorationPlugin(plugin.HuttonHelperPlugin):
     def prefs_changed(self, cmdr, is_beta):
         "Called when the user clicks OK on the settings dialog."
 
-        self.config.set(SHOW_EXPLORATION_VALUE, self.enabled_var.get())
+        self.helper.prefs[CFG_SHOW_EXPLORATION] = bool(self.enabled_intvar.get())
         self.__update_hidden()
 
     def __update_hidden(self):
         "Update our ``hidden`` flag."
 
-        self.hidden = not self.enabled_var.get()
+        self.hidden = not self.enabled_intvar.get()
 
     def journal_entry(self, cmdr, _is_beta, _system, _station, entry, _state):
         "Act like a tiny EDMC plugin."
 
-        if cmdr != self.cmdr:
-            self.__reset(cmdr=cmdr)
-
         if entry['event'] == 'SendText' and 'reset exploration data' in entry['Message']:
             self.credits = 0
 
-        if entry['event'] == 'Scan' or not self.ready:
+        if self.__reset(cmdr=cmdr) or entry['event'] == 'Scan' or not self.ready:
             self.__check_again()
 
     def cmdr_data(self, data, is_beta):
         "Act like a tiny EDMC plugin."
 
-        cmdr = data.get('commander').get('name')
-        self.__reset(cmdr=cmdr)
-        self.__check_again()
+        if self.__reset(cmdr=data.get('commander').get('name')):
+            self.__check_again()
 
     def __check_again(self):
         "Called when we need to check again."
@@ -124,7 +125,7 @@ class ExplorationPlugin(plugin.HuttonHelperPlugin):
             self.credits = float(json_data['ExploCredits'])
 
             if self.textvariable:
-                self.textvariable.set("{:,.0f}".format(self.credits))
+                self.textvariable.set("at least {:,.0f}".format(self.credits))
 
             self.refresh()
 
