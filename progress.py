@@ -218,6 +218,7 @@ class ProgressPlugin(plugin.HuttonHelperPlugin):
         self.display = None
         self.data = None
         self.cmdr = None
+        self.fetching = False
 
     def __reset(self, cmdr=None):
         "Reset our numbers to switch commander."
@@ -240,18 +241,33 @@ class ProgressPlugin(plugin.HuttonHelperPlugin):
         if not self.cmdr:
             return
 
-        self.data = xmit.get('/day-week-stats.json/{}'.format(self.cmdr))
-        if self.display:
-            self.ready = self.display.update(self.data)
-            self.refresh()
+        if self.fetching:
+            return
+
+        try:
+            self.fetching = True
+            self.data = xmit.get('/day-week-stats.json/{}'.format(self.cmdr))
+            if self.display:
+                self.ready = self.display.update(self.data)
+                self.refresh()
+
+        finally:
+            self.fetching = False
 
     def plugin_app(self, parent):
         "Called once to get the plugin widget. Return a ``tk.Frame``."
 
-        self.display = ProgressDisplay(parent, helper=self.helper)
+        frame = tk.Frame(parent)
+        frame.columnconfigure(0, weight=1)
+        tk.Frame(frame, highlightthickness=1).grid(pady=5, sticky=tk.EW)  # divider
+
+        self.display = ProgressDisplay(frame, helper=self.helper)
+        self.display.grid(sticky=tk.EW)
+
         self.ready = self.display.update()
         self.__initialise_prefs()
-        return self.display
+
+        return frame
 
     def __initialise_prefs(self):
         "Initialise the preference system."

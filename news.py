@@ -19,16 +19,16 @@ class HuttonNews(HyperlinkLabel):
 
     def __init__(self, parent):
         "Initialise the ``HuttonNews``."
+
         HyperlinkLabel.__init__(
             self,
             parent,
-            text="No News Yet",
+            text="Fetching...",
             url=DEFAULT_NEWS_URL,
-            underline=True,
-            wraplength=WRAP_LENGTH,
+            wraplength=50,  # updated in __configure_event below
             anchor=tk.NW
         )
-
+        self.bind('<Configure>', self.__configure_event)
         self.after(250, self.news_update)
 
     def news_update(self):
@@ -43,3 +43,8 @@ class HuttonNews(HyperlinkLabel):
 
         else:
             self['text'] = "News refresh failed"
+
+    def __configure_event(self, event):
+        "Handle resizing."
+
+        self.configure(wraplength=event.width)
