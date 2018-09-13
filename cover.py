@@ -7,7 +7,7 @@ import Tkinter as tk
 import ttk
 
 
-DONT_PANIC = "DON'T PANIC"
+DONT_PANIC = "DON'T PANIC!"
 TK_DEFAULT_FONT = 'TkDefaultFont'
 
 
