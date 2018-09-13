@@ -257,10 +257,17 @@ class ProgressPlugin(plugin.HuttonHelperPlugin):
     def plugin_app(self, parent):
         "Called once to get the plugin widget. Return a ``tk.Frame``."
 
-        self.display = ProgressDisplay(parent, helper=self.helper)
+        frame = tk.Frame(parent)
+        frame.columnconfigure(0, weight=1)
+        tk.Frame(frame, highlightthickness=1).grid(pady=5, sticky=tk.EW)  # divider
+
+        self.display = ProgressDisplay(frame, helper=self.helper)
+        self.display.grid(sticky=tk.EW)
+
         self.ready = self.display.update()
         self.__initialise_prefs()
-        return self.display
+
+        return frame
 
     def __initialise_prefs(self):
         "Initialise the preference system."

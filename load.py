@@ -24,6 +24,7 @@ import requests # still here for CG code
 import cgt
 import exploration
 import forward
+import influence
 import local
 import news
 import plugin as plugin_module
@@ -60,7 +61,8 @@ def plugin_start():
         cgt.CommunityGoalWatcher(this.helper),
         forward.ForTheMugPlugin(this.helper),
         local.CommandPlugin(this.helper),
-        shopping.ShoppingListPlugin(this.helper)
+        shopping.ShoppingListPlugin(this.helper),
+        influence.InfluencePlugin(this.helper)
     ]
 
     for plugin in plugins:
