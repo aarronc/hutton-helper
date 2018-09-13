@@ -8,7 +8,7 @@ import uuid
 from ttkHyperlinkLabel import HyperlinkLabel
 import xmit
 
-REFRESH_MINUTES = 1
+REFRESH_MINUTES = 5
 DEFAULT_NEWS_URL = 'http://hot.forthemug.com/dailyupdate/index.php'
 WRAP_LENGTH = 200
 uptime_stats = uuid.uuid4()
