@@ -90,7 +90,6 @@ def plugin_app(parent):
         table,
         text='Helper:',
         url='https://hot.forthemug.com/',
-        underline=False,
         anchor=anchor,
     ).grid(row=0, column=0, sticky=sticky)
     this.status = ttk.Label(table, anchor=anchor, text="For the Mug!")
