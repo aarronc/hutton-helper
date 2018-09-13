@@ -22,15 +22,16 @@ import requests # still here for CG code
 
 # Internal plugins and utilities:
 import cgt
-import cover
 import exploration
 import forward
 import local
 import news
 import plugin as plugin_module
 import progress
+import shopping
 import toolbar
 import updater
+import widgets
 import xmit
 
 this = sys.modules[__name__]  # pylint: disable=C0103
@@ -58,7 +59,8 @@ def plugin_start():
         exploration.ExplorationPlugin(this.helper),
         cgt.CommunityGoalWatcher(this.helper),
         forward.ForTheMugPlugin(this.helper),
-        local.CommandPlugin(this.helper)
+        local.CommandPlugin(this.helper),
+        shopping.ShoppingListPlugin(this.helper)
     ]
 
     for plugin in plugins:
@@ -94,7 +96,7 @@ def plugin_app(parent):
     this.status = ttk.Label(table, anchor=anchor, text="For the Mug!")
     this.status.grid(row=0, column=1, sticky=sticky)
 
-    ttk.Label(table, anchor=anchor, text="News:").grid(row=1, column=0, sticky=sticky)
+    widgets.StyleCaptureLabel(table, anchor=anchor, text="News:").grid(row=1, column=0, sticky=sticky)
     news.HuttonNews(table).grid(row=1, column=1, sticky=sticky)
 
     this.plugin_rows = {}
@@ -116,7 +118,7 @@ def plugin_app(parent):
 
     # Add the front cover
     this.front_cover_row = row
-    this.front_cover = cover.FrontCover(frame)
+    this.front_cover = widgets.FrontCover(frame)
     _show_front_cover(True)
 
     # Arrange for the front cover to be shown for at least a few seconds
