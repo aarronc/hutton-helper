@@ -5,7 +5,7 @@ Module to provide the news.
 
 import Tkinter as tk
 import uuid
-from ttkHyperlinkLabel import HyperlinkLabel
+from widgets import SelfWrappingHyperlinkLabel
 import xmit
 
 REFRESH_MINUTES = 5
@@ -13,13 +13,14 @@ DEFAULT_NEWS_URL = 'http://hot.forthemug.com/dailyupdate/index.php'
 WRAP_LENGTH = 200
 uptime_stats = uuid.uuid4()
 
-class HuttonNews(HyperlinkLabel):
+
+class HuttonNews(SelfWrappingHyperlinkLabel):
     "A label to display the headline and link to the news. Not a plugin because it doesn't have preferences or watch the pilot."
 
     def __init__(self, parent):
         "Initialise the ``HuttonNews``."
 
-        HyperlinkLabel.__init__(
+        SelfWrappingHyperlinkLabel.__init__(
             self,
             parent,
             text="Fetching...",
@@ -27,7 +28,6 @@ class HuttonNews(HyperlinkLabel):
             wraplength=50,  # updated in __configure_event below
             anchor=tk.NW
         )
-        self.bind('<Configure>', self.__configure_event)
         self.after(250, self.news_update)
 
     def news_update(self):
@@ -42,8 +42,3 @@ class HuttonNews(HyperlinkLabel):
 
         else:
             self['text'] = "News refresh failed"
-
-    def __configure_event(self, event):
-        "Handle resizing."
-
-        self.configure(wraplength=event.width)
