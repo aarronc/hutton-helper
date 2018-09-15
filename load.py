@@ -56,13 +56,13 @@ def plugin_start():
     this.plugins = [
         # A list of plugins to which we pass events.
         updater.UpdatePlugin(this.helper),
-        progress.ProgressPlugin(this.helper),
-        exploration.ExplorationPlugin(this.helper),
         cgt.CommunityGoalWatcher(this.helper),
         forward.ForTheMugPlugin(this.helper),
         local.CommandPlugin(this.helper),
         shopping.ShoppingListPlugin(this.helper),
-        influence.InfluencePlugin(this.helper)
+        influence.InfluencePlugin(this.helper),
+        progress.ProgressPlugin(this.helper),
+        exploration.ExplorationPlugin(this.helper)
     ]
 
     for plugin in plugins:
@@ -94,7 +94,7 @@ def plugin_app(parent):
         url='https://hot.forthemug.com/',
         anchor=anchor,
     ).grid(row=0, column=0, sticky=sticky)
-    this.status = ttk.Label(table, anchor=anchor, text="For the Mug!")
+    this.status = widgets.SelfWrappingLabel(table, anchor=anchor, text="For the Mug!")
     this.status.grid(row=0, column=1, sticky=sticky)
 
     widgets.StyleCaptureLabel(table, anchor=anchor, text="News:").grid(row=1, column=0, sticky=sticky)
@@ -130,7 +130,20 @@ def plugin_app(parent):
     # Add the toolbar
     toolbar.HuttonToolbar(frame).grid(row=row + 1, pady=pady, sticky=sticky)
 
+    # Uncomment the next line to thrash the status line shortly after startup:
+    # frame.after(5000, _thrash, EVENT_STATUS_FORMATS.values())
+    
     return frame
+
+
+def _thrash(remain):
+    "Thrash through a list of status messages for layout troubleshooting."
+
+    if remain:
+        remain = remain[:]
+        text = remain.pop()
+        _status(text)
+        this.frame.after(500, _thrash, remain)
 
 
 def _show_front_cover(show=True):
