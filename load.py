@@ -132,7 +132,7 @@ def plugin_app(parent):
 
     # Uncomment the next line to thrash the status line shortly after startup:
     # frame.after(5000, _thrash, EVENT_STATUS_FORMATS.values())
-    
+
     return frame
 
 
