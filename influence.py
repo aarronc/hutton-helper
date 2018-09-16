@@ -76,7 +76,7 @@ class InfluencePlugin(plugin.HuttonHelperPlugin):
                 'FactionState': 'None',
                 'Influence': 0.323353,
             }],
-            'SystemFaction': 'Hutton Orbital Truckers Co-Operative'
+            'SystemFaction': 'Social Ross 671 for Equality'
         }
         self.journal_entry(None, False, None, None, entry, None)
 
@@ -84,10 +84,6 @@ class InfluencePlugin(plugin.HuttonHelperPlugin):
         "Act like a tiny EDMC plugin."
 
         if entry['event'] == 'FSDJump':
-            self.in_faction_space = entry['SystemFaction'] in FACTIONS
-            if not self.in_faction_space:
-                return
-
             influence_them = float('-inf')
             influence_us = float('-inf')
             state_us = ""
@@ -100,9 +96,18 @@ class InfluencePlugin(plugin.HuttonHelperPlugin):
                     influence_them = max([influence_them, faction['Influence']])
 
             self.system_label['text'] = entry['StarSystem']
-            self.state_label['text'] = state_us
-            self.influence_label['text'] = '{:.1f}%'.format(100 * influence_us)
-            self.margin_label['text'] = '({:+.1f}%)'.format(100 * (influence_us - influence_them))
+            self.in_faction_space = not (influence_us < 0)
+
+            if self.in_faction_space:
+                self.state_label['text'] = state_us
+                self.influence_label['text'] = '{:.1f}%'.format(100 * influence_us)
+                self.margin_label['text'] = '(by {:.1f}%)'.format(100 * (influence_us - influence_them))
+
+            else:
+                self.state_label['text'] = 'N/A'
+                self.influence_label['text'] = 'N/A'
+                self.margin_label['text'] = 'N/A'
+
             self.__update_hidden()
 
     def plugin_prefs(self, parent, cmdr, is_beta):
