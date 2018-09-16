@@ -69,6 +69,7 @@ class StyleCaptureLabel(ttk.Label):
 
         ttk.Label.configure(self, *args, **kwargs)
         self.__style.configure('HH.TCheckbutton', **kwargs)
+        self.__style.configure('HH.TLabel', **kwargs)
 
 
 class SelfWrappingHyperlinkLabel(HyperlinkLabel):
