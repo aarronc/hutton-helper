@@ -5,16 +5,116 @@ You'd better stock up on land mines for that trip, Commander.
 import json
 import sys
 import time
+import tkFont
 import Tkinter as tk
 import ttk
 
 import plugin
 
-import myNotebook as nb
+try:
+    import myNotebook as nb
+except ImportError:
+    pass  # trust that we're getting run as a script
 
 
 CFG_SHOW_SHOPPING = 'ShowShoppingList'
 STALE_AFTER_SECONDS = 5
+
+TEST_EVENTS = [
+    {
+        'event': 'Cargo',
+        'Inventory': [{
+            'Count': 4,
+            'Name_Localised': 'Uranium',
+            'Name': 'uranium',
+        }],
+    },  # hidden
+    {
+        'event': 'MissionAccepted',
+        'Commodity_Localised': 'Uranium',
+        'Commodity': '$Uranium_Name',
+        'Count': 25,
+        'MissionID': 415110664,
+        'Name': 'Mission_Collect',
+    },  # 25, 4
+    {
+        'event': 'MissionAccepted',
+        'Commodity_Localised': 'Uranium',
+        'Commodity': '$Uranium_Name',
+        'Count': 23,
+        'MissionID': 415110665,
+        'Name': 'Mission_Collect',
+    },  # 48, 4
+    {
+        'event': 'MissionAccepted',
+        'Commodity_Localised': 'Uranium',
+        'Commodity': '$Uranium_Name',
+        'Count': 22,
+        'MissionID': 415110666,
+        'Name': 'Mission_Collect',
+    },  # 70, 4
+    {
+        'event': 'MissionAccepted',
+        'Commodity_Localised': 'Uranium',
+        'Commodity': '$Uranium_Name',
+        'Count': 2,
+        'MissionID': 415110667,
+        'Name': 'Mission_Collect',
+    },  # 72, 4
+    {
+        'event': 'MarketBuy',
+        'Count': 27,
+        'Type_Localised': 'Uranium',
+        'Type': 'uranium',
+    },  # 72, 31
+    {
+        'event': 'MarketBuy',
+        'Count': 41,
+        'Type_Localised': 'Uranium',
+        'Type': 'uranium',
+    },  # 72, 72
+    {
+        'event': 'CargoDepot',
+        'Count': 25,
+        'ItemsDelivered': 25,
+        'MissionID': 415110664,
+        'TotalItemsToDeliver': 25,
+        'CargoType_Localised': 'Uranium',
+        'CargoType': 'Uranium',
+        'UpdateType': 'Deliver',
+    },  # 47, 47
+    {
+        'event': 'MissionCompleted',
+        'MissionID': 415110664,
+    },  # 47, 47
+    {
+        'event': 'MarketSell',
+        'Count': 1,
+        'Type_Localised': 'Uranium',
+        'Type': 'uranium',
+    },  # 47, 46
+    {
+        'event': 'EjectCargo',
+        'Count': 1,
+        'Type_Localised': 'Uranium',
+        'Type': 'uranium',
+    },  # 47, 45
+    {
+        'event': 'MissionAbandoned',
+        'MissionID': 415110667,
+    },  # 45, 45
+    {
+        'event': 'Died'
+    },  # 45, 0
+    {
+        'event': 'MissionFailed',
+        'MissionID': 415110665,
+    },  # 22, 0
+    {
+        'event': 'Missions',
+        'Active': [],
+    },  # 0, 0
+]
 
 
 class ShoppingListPlugin(plugin.HuttonHelperPlugin):
@@ -25,7 +125,8 @@ class ShoppingListPlugin(plugin.HuttonHelperPlugin):
 
         plugin.HuttonHelperPlugin.__init__(self, config)
         self.table_frame = None
-        self.items = []
+        self.missions = []
+        self.cargo = {}
         self.visible_count = 0
 
     def plugin_app(self, parent):
@@ -33,91 +134,178 @@ class ShoppingListPlugin(plugin.HuttonHelperPlugin):
 
         frame = tk.Frame(parent)
         frame.columnconfigure(0, weight=1)
-
-        tk.Frame(frame, highlightthickness=1).grid(pady=5, sticky=tk.EW)
-        self.heading = ttk.Label(frame, text="[SHOPPING LIST]", anchor=tk.NW)
-        self.heading.grid(sticky=tk.EW)
+        tk.Frame(frame, highlightthickness=1).grid(pady=5, sticky=tk.EW)  # divider
 
         self.table_frame = tk.Frame(frame)
         self.table_frame.grid(sticky=tk.EW)
+        self.table_frame.columnconfigure(0, weight=1)
 
         enabled = self.helper.prefs.setdefault(CFG_SHOW_SHOPPING, True)
         self.enabled_intvar = tk.IntVar(value=1 if enabled else 0)
         self.__update_hidden()
 
-        # frame.after(5000, self.fake_an_entry)
+        # Uncomment the next line to replay TEST_EVENTS after startup:
+        # frame.after(5000, self.__replay, TEST_EVENTS)
 
         return frame
 
-    def fake_an_entry(self):
-        "Fake an entry for testing purposes."
-        entry = {
-            'event': 'MissionAccepted',
-            'Commodity_Localised': 'Consumer Technology',
-            'Count': 2,
-        }
-        self.journal_entry(None, False, None, None, entry, None)
+    def __replay(self, entries):
+        "Replay entries for development purposes."
+
+        if entries:
+            entries = entries[:]
+            # This line below is why this method is easier to copy and paste into
+            # each plugin than to make generic enough to pull to the base class:
+            entry = entries.pop(0)
+            print '=== replay', entry
+            self.journal_entry(None, False, None, None, entry, None)
+            self.table_frame.after(500, self.__replay, entries)
 
     def journal_entry(self, cmdr, _is_beta, _system, _station, entry, _state):
         "Act like a tiny EDMC plugin."
 
-        if entry['event'] != 'MissionAccepted':
+        method = 'event_{}'.format(entry['event'].lower())
+        if hasattr(self, method):
+            getattr(self, method)(entry)
+            self.refresh()
+
+    def event_cargo(self, entry):
+        "Handle ``Cargo``."
+
+        self.cargo = {}
+
+        # TODO this is by the lowercase version FFS
+        for item in entry['Inventory']:
+            commodity = item['Name_Localised']
+            count = item['Count']
+            self.cargo[commodity] = count
+
+    def event_cargodepot(self, entry):
+        "Handle ``CargoDepot``."
+
+        for mission in self.missions:
+            if mission['mission_id'] == entry['MissionID']:
+                mission['remaining'] = entry['TotalItemsToDeliver'] - entry['ItemsDelivered']
+
+        if 'Count' in entry and 'CargoType_Localised' in entry:
+            # absent if a wing member dropped something off
+            commodity = entry['CargoType_Localised']
+            count = entry['Count']
+            self.cargo[commodity] -= count
+
+    def event_ejectcargo(self, entry):
+        "Handle ``EjectCargo``."
+
+        self.__remove_cargo(entry['Type_Localised'], entry['Count'])
+
+    def event_died(self, entry):
+        "Handle ``Died``."
+
+        self.cargo = {}
+
+    def event_marketbuy(self, entry):
+        "Handle ``MarketBuy``."
+
+        commodity = entry['Type_Localised']
+        self.cargo[commodity] = self.cargo.get(commodity, 0) + entry['Count']
+
+    def event_marketsell(self, entry):
+        "Handle ``MarketSell``."
+
+        self.__remove_cargo(entry['Type_Localised'], entry['Count'])
+
+    def event_missionaccepted(self, entry):
+        "Handle ``MissionAccepted``."
+
+        for prefix in ['mission_collect', 'mission_passengervip']:
+            if entry['Name'].lower().startswith(prefix):
+                break
+
+        else: # nothing broke
             return
 
-        text = entry.get('Commodity_Localised')
-        count = entry.get('Count')
+        commodity = entry['Commodity_Localised']
+        remaining = entry['Count']
+        mission_id = entry['MissionID']
 
-        if not text and count:
-            return
-
-        intvar = tk.IntVar(value=0)
-        intvar.trace('w', lambda _x, _y, _z: self.refresh())
-
-        checkbutton = ttk.Checkbutton(
-            self.table_frame,
-            text='{}X {}'.format(count, text),
-            variable=intvar,
-            style='HH.TCheckbutton'
-        )
-        self.items.append(dict(
-            text=text,
-            count=count,
-            intvar=intvar,
-            checkbutton=checkbutton,
+        self.missions.append(dict(
+            mission_id=mission_id,
+            commodity=commodity,
+            remaining=remaining,
         ))
-        self.refresh()
+
+    def event_missioncompleted(self, entry):
+        "Handle ``MissionCompleted``."
+
+        self.__remove_mission(entry['MissionID'])
+
+    def event_missionfailed(self, entry):
+        "Handle ``MissionFailed``."
+
+        self.__remove_mission(entry['MissionID'])
+
+    def event_missionabandoned(self, entry):
+        "Handle ``MissionAbandoned``."
+
+        self.__remove_mission(entry['MissionID'])
+
+    def event_missions(self, entry):
+        "Handle ``Missions``."
+
+        known = set(mission['mission_id'] for mission in self.missions)
+        active = set(mission['MissionID'] for mission in entry['Active'])
+
+        for mission_id in known - active:
+            self.__remove_mission(mission_id)
+
+    def __remove_cargo(self, commodity, count):
+        "Remove some cargo."
+
+        count = self.cargo.get(commodity, 0) - count
+        if count < 0:
+            count = 0
+        self.cargo[commodity] = count
+
+    def __remove_mission(self, mission_id):
+        "Remove a mission."
+
+        self.missions = [mission for mission in self.missions
+                         if mission['mission_id'] != mission_id]
 
     def refresh(self):
         "Refresh our display."
 
-        self.visible_count = 0
-        for row, entry in enumerate(self.items):
-            hidden = False
+        frame = self.table_frame
 
-            if entry['intvar'].get():
-                if 'checked_when' in entry:
-                    if time.time() > entry['checked_when'] + STALE_AFTER_SECONDS:
-                        hidden = True
+        for widget in frame.winfo_children():
+            widget.destroy()
 
-                else:
-                    entry['checked_when'] = time.time()
-                    self.table_frame.after(500 + STALE_AFTER_SECONDS * 1000, self.refresh)
+        by_com = {}
+        for mission in self.missions:
+            by_com.setdefault(mission['commodity'], []).append(mission)
 
-            else:
-                if 'checked_when' in entry:
-                    del entry['checked_when']
+        def gridlabel(**kw):
+            "Make a grid label."
+            return ttk.Label(frame, style='HH.TLabel', **kw)
 
-            if hidden:
-                entry['checkbutton'].grid_forget()
+        text = "Mission needs:" if len(self.missions) == 1 else "Missions need:"
+        gridlabel(text=text, anchor=tk.W).grid(row=0, column=0, sticky=tk.EW)
+        gridlabel(text="Remaining", anchor=tk.E).grid(row=0, column=1, sticky=tk.EW)
+        gridlabel(text="In Cargo", anchor=tk.E).grid(row=0, column=2, sticky=tk.EW)
 
-            else:
-                self.visible_count = self.visible_count + 1
-                entry['checkbutton'].grid(row=row, column=0, sticky=tk.EW)
+        normal = ttk.Style().configure('HH.TLabel').get('font', 'TkDefaultFont')
+        if isinstance(normal, str):
+            normal = tkFont.nametofont('TkDefaultFont')
+        complete = normal.copy()
+        complete['overstrike'] = 1
 
-        if self.visible_count == 1:
-            self.heading['text'] = "Stock up for that mission, Commander!"
-        else:
-            self.heading['text'] = "Stock up for those missions, Commander!"
+        for row, commodity in enumerate(sorted(by_com), start=1):
+            remaining = sum(mission['remaining'] for mission in by_com[commodity])
+            cargo = self.cargo.get(commodity, 0)
+            font = complete if cargo >= remaining else normal
+            gridlabel(text=commodity, anchor=tk.W, font=font).grid(row=row, column=0, sticky=tk.EW)
+            gridlabel(text='{:,.0f}'.format(remaining), anchor=tk.E, font=font).grid(row=row, column=1, sticky=tk.EW)
+            gridlabel(text='{:,.0f}'.format(cargo), anchor=tk.E, font=font).grid(row=row, column=2, sticky=tk.EW)
 
         self.__update_hidden()
         plugin.HuttonHelperPlugin.refresh(self)
@@ -146,4 +334,4 @@ class ShoppingListPlugin(plugin.HuttonHelperPlugin):
     def __update_hidden(self):
         "Update whether we're hidden."
 
-        self.hidden = not (self.visible_count and self.enabled_intvar.get())
+        self.hidden = not (self.missions and self.enabled_intvar.get())

@@ -5,6 +5,7 @@ Module to provide exploration credit tracking.
 import json
 import sys
 import Tkinter as tk
+import ttk
 import zlib
 
 import plugin
@@ -53,8 +54,8 @@ class ExplorationPlugin(plugin.HuttonHelperPlugin):
 
         self.textvariable = tk.StringVar()
         self.textvariable.set("(Waiting...)")
-        tk.Label(frame, text="UNSOLD exploration credits:", anchor=tk.NW).grid(row=0, column=0, sticky=tk.NW)
-        tk.Label(frame, textvariable=self.textvariable, anchor=tk.NE).grid(row=0, column=1, sticky=tk.NE)
+        ttk.Label(frame, text="UNSOLD exploration credits:", anchor=tk.NW).grid(row=0, column=0, sticky=tk.NW)
+        ttk.Label(frame, textvariable=self.textvariable, anchor=tk.NE).grid(row=0, column=1, sticky=tk.NE)
 
         enabled = self.helper.prefs.setdefault(CFG_SHOW_EXPLORATION, False)
         self.enabled_intvar = tk.IntVar(value=1 if enabled else 0)
