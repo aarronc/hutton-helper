@@ -2,6 +2,7 @@
 Various display widgets.
 """
 
+import collections
 import tkFont
 import Tkinter as tk
 import ttk
@@ -66,6 +67,15 @@ class StyleCaptureLabel(ttk.Label):
 
     def configure(self, *args, **kwargs):
         "Reconfigure the ``StyleCaptureLabel``. Capture the details."
+
+        if 'font' in kwargs:  # capture full font details
+            font = kwargs['font']
+
+            if isinstance(font, str):
+                kwargs['font'] = tkFont.nametofont(font)
+
+            elif isinstance(font, collections.Iterable):
+                kwargs['font'] = tkFont.Font(font=font)
 
         ttk.Label.configure(self, *args, **kwargs)
         self.__style.configure('HH.TCheckbutton', **kwargs)
