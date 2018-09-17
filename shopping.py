@@ -217,7 +217,7 @@ class ShoppingListPlugin(plugin.HuttonHelperPlugin):
     def event_missionaccepted(self, entry):
         "Handle ``MissionAccepted``."
 
-        for prefix in ['mission_collect', 'mission_passengervip']:
+        for prefix in ['mission_collect', 'mission_passengervip', 'mission_mining']:
             if entry['Name'].lower().startswith(prefix):
                 break
 
