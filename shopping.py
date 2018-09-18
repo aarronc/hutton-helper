@@ -70,7 +70,7 @@ TEST_EVENTS = [
     {
         'event': 'MarketBuy',
         'Count': 41,
-        'Type_Localised': 'Uranium',
+        # 'Type_Localised': 'Uranium',  # sometimes, we don't get it
         'Type': 'uranium',
     },  # 72, 72
     {
@@ -111,10 +111,59 @@ TEST_EVENTS = [
         'MissionID': 415110665,
     },  # 22, 0
     {
+        'event': 'MiningRefined',
+        'Type': 'Uranium' # I don't know if this actually happens, but bear with me
+    },  # 22, 1
+    {
+        'event': 'CollectCargo',
+        'Type': 'Uranium'
+    },  # 22, 2
+    {
         'event': 'Missions',
         'Active': [],
     },  # 0, 0
 ]
+
+LOCALISATION_CACHE = {}
+
+
+def _extract_commodity(entry):
+    "Get the commodity type and localised description from an ``event`` entry."
+
+    if 'Commodity' in entry:  # MissionAccepted
+        commodity = entry['Commodity']
+        if commodity[:1] == '$':  # $Uranium_Name;
+            commodity = commodity[1:].split('_')[0]
+        return commodity, entry.get('Commodity_Localised')
+
+    if 'Type' in entry:  # MarketBuy, MarketSell, EjectCargo, MiningRefined
+        return entry['Type'], entry.get('Type_Localised')
+
+    elif 'CargoType' in entry:  # CargoDepot
+        return entry['CargoType'], entry.get('CargoType_Localised')
+
+    elif 'Name' in entry and 'event' not in entry:  # Cargo event Inventory entry
+        return entry['Name'], entry.get('Name_Localised')
+
+    sys.stderr.write("Entry: {}\r\n", entry)
+    raise AssertionError("could not extract commodity details from entry")
+
+
+def extract_commodity(entry):
+    "Get the commodity type and localised description from an ``event`` entry, caching descriptions."
+
+    commodity, commodity_localised = _extract_commodity(entry)
+
+    if commodity:
+        commodity = commodity.lower()
+
+        if commodity_localised is None and commodity in LOCALISATION_CACHE:
+            commodity_localised = LOCALISATION_CACHE[commodity]
+
+        if commodity_localised is not None and commodity not in LOCALISATION_CACHE:
+            LOCALISATION_CACHE[commodity] = commodity_localised
+
+    return commodity, commodity_localised
 
 
 class ShoppingListPlugin(plugin.HuttonHelperPlugin):
@@ -176,7 +225,7 @@ class ShoppingListPlugin(plugin.HuttonHelperPlugin):
 
         # TODO this is by the lowercase version FFS
         for item in entry['Inventory']:
-            commodity = item['Name_Localised']
+            commodity, _desc = extract_commodity(item)
             count = item['Count']
             self.cargo[commodity] = count
 
@@ -187,32 +236,46 @@ class ShoppingListPlugin(plugin.HuttonHelperPlugin):
             if mission['mission_id'] == entry['MissionID']:
                 mission['remaining'] = entry['TotalItemsToDeliver'] - entry['ItemsDelivered']
 
-        if 'Count' in entry and 'CargoType_Localised' in entry:
+        if 'Count' in entry and 'CargoType' in entry:
             # absent if a wing member dropped something off
-            commodity = entry['CargoType_Localised']
+            commodity, _desc = extract_commodity(entry)
             count = entry['Count']
             self.cargo[commodity] -= count
 
     def event_ejectcargo(self, entry):
         "Handle ``EjectCargo``."
 
-        self.__remove_cargo(entry['Type_Localised'], entry['Count'])
+        commodity, _desc = extract_commodity(entry)
+        self.__remove_cargo(commodity, entry['Count'])
 
     def event_died(self, entry):
         "Handle ``Died``."
 
         self.cargo = {}
 
+    def event_collectcargo(self, entry):
+        "Handle ``CollectCargo``."
+
+        commodity, _desc = extract_commodity(entry)
+        self.__add_cargo(commodity, 1)
+
     def event_marketbuy(self, entry):
         "Handle ``MarketBuy``."
 
-        commodity = entry['Type_Localised']
-        self.cargo[commodity] = self.cargo.get(commodity, 0) + entry['Count']
+        commodity, _desc = extract_commodity(entry)
+        self.__add_cargo(commodity, entry['Count'])
 
     def event_marketsell(self, entry):
         "Handle ``MarketSell``."
 
-        self.__remove_cargo(entry['Type_Localised'], entry['Count'])
+        commodity, _desc = extract_commodity(entry)
+        self.__remove_cargo(commodity, entry['Count'])
+
+    def event_miningrefined(self, entry):
+        "Handle ``MiningRefined``."
+
+        commodity, _desc = extract_commodity(entry)
+        self.__add_cargo(commodity, 1)
 
     def event_missionaccepted(self, entry):
         "Handle ``MissionAccepted``."
@@ -224,7 +287,7 @@ class ShoppingListPlugin(plugin.HuttonHelperPlugin):
         else: # nothing broke
             return
 
-        commodity = entry['Commodity_Localised']
+        commodity, _desc = extract_commodity(entry)
         remaining = entry['Count']
         mission_id = entry['MissionID']
 
@@ -257,6 +320,11 @@ class ShoppingListPlugin(plugin.HuttonHelperPlugin):
 
         for mission_id in known - active:
             self.__remove_mission(mission_id)
+
+    def __add_cargo(self, commodity, count):
+        "Remove some cargo."
+
+        self.cargo[commodity] = self.cargo.get(commodity, 0) + count
 
     def __remove_cargo(self, commodity, count):
         "Remove some cargo."
@@ -300,10 +368,12 @@ class ShoppingListPlugin(plugin.HuttonHelperPlugin):
         complete['overstrike'] = 1
 
         for row, commodity in enumerate(sorted(by_com), start=1):
+            description = LOCALISATION_CACHE.get(commodity, commodity.upper())
             remaining = sum(mission['remaining'] for mission in by_com[commodity])
             cargo = self.cargo.get(commodity, 0)
             font = complete if cargo >= remaining else normal
-            gridlabel(text=commodity, anchor=tk.W, font=font).grid(row=row, column=0, sticky=tk.EW)
+
+            gridlabel(text=description, anchor=tk.W, font=font).grid(row=row, column=0, sticky=tk.EW)
             gridlabel(text='{:,.0f}'.format(remaining), anchor=tk.E, font=font).grid(row=row, column=1, sticky=tk.EW)
             gridlabel(text='{:,.0f}'.format(cargo), anchor=tk.E, font=font).grid(row=row, column=2, sticky=tk.EW)
 
