@@ -2,7 +2,7 @@
 Treats LOCAL as if it's a command line.
 """
 
-from __init__ import __version__ as HH_VERSION
+from version import HH_VERSION
 
 import json
 import zlib
