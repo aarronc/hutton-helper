@@ -2,7 +2,7 @@
 Update mechanism.
 """
 
-from __init__ import __version__ as HH_VERSION
+from version import HH_VERSION
 
 import collections
 import ConfigParser

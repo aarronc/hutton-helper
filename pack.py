@@ -2,7 +2,7 @@
 Code to pack updates into ZIP files.
 """
 
-from __init__ import __version__ as HH_VERSION
+from version import HH_VERSION
 
 import hashlib
 import json
