@@ -2,7 +2,7 @@
 Broadcasts to the Hutton Helper web site.
 """
 
-from __init__ import __version__ as HH_VERSION
+from version import HH_VERSION
 
 import json
 import zlib

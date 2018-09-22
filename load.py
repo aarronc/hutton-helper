@@ -1,6 +1,6 @@
 "The Hutton Helper. For the Mug!"
 
-from __init__ import __version__ as HH_VERSION
+from version import HH_VERSION
 
 import json
 import os
@@ -20,21 +20,30 @@ import tkMessageBox
 
 import requests # still here for CG code
 
-# Internal plugins and utilities:
-import cgt
-import exploration
-import forward
-import influence
-import local
-import market
-import news
-import plugin as plugin_module
-import progress
-import shopping
-import toolbar
-import updater
-import widgets
-import xmit
+try:
+    HERE = os.path.dirname(__file__)
+    sys.path.insert(0, HERE)
+
+    # We import the rest of the Hutton Helper together in this block while
+    # we've altered sys.path so we don't inhale files from EDMC "package"
+    # plugins by accident. https://git.io/fAQkf#python-package-plugins
+
+    import cgt
+    import exploration
+    import forward
+    import influence
+    import local
+    import news
+    import plugin as plugin_module
+    import progress
+    import shopping
+    import toolbar
+    import updater
+    import widgets
+    import xmit
+
+finally:
+    del sys.path[0]
 
 this = sys.modules[__name__]  # pylint: disable=C0103
 this.msg = ""
