@@ -200,6 +200,7 @@ class ProgressPlugin(plugin.HuttonHelperPlugin):
         'RedeemVoucher',
         'Scan',
         'SellExplorationData',
+        'FactionKillBond',
     ])
 
     config_intvars = [
