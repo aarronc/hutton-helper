@@ -72,7 +72,8 @@ def plugin_start():
         shopping.ShoppingListPlugin(this.helper),
         influence.InfluencePlugin(this.helper),
         progress.ProgressPlugin(this.helper),
-        exploration.ExplorationPlugin(this.helper)
+        exploration.ExplorationPlugin(this.helper),
+        market.MarketPlugin(this.helper),
     ]
 
     for plugin in plugins:
