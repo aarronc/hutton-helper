@@ -88,7 +88,7 @@ class InfluencePlugin(plugin.HuttonHelperPlugin):
             influence_us = float('-inf')
             state_us = ""
 
-            for faction in entry['Factions']:
+            for faction in entry.get('Factions', []):
                 if faction['Name'] in FACTIONS:
                     influence_us = faction['Influence']
                     state_us = faction['FactionState']
