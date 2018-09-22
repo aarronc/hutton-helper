@@ -89,8 +89,7 @@ class SelfWrappingHyperlinkLabel(HyperlinkLabel):
         "Init."
 
         HyperlinkLabel.__init__(self, *a, **kw)
-        self.frame=a[0]
-        self.frame.bind('<Configure>', self.__configure_event)
+        self.bind('<Configure>', self.__configure_event)
 
     def __configure_event(self, event):
         "Handle resizing."

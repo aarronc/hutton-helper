@@ -41,6 +41,7 @@ try:
     import updater
     import widgets
     import xmit
+    import market
 
 finally:
     del sys.path[0]
