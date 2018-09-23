@@ -240,6 +240,8 @@ def prefs_changed(cmdr, is_beta):
 
 
 EVENT_STATUS_FORMATS = {
+    'ApproachBody': "Approached {Body}",
+    'ApproachSettlement': "Approached {Name}",
     'CargoDepot': "Wing Mission Info updated",
     'CollectCargo': "Cargo scooped into cargo bay",
     'CommunityGoal': "Community Goal Data Received",
@@ -262,7 +264,7 @@ EVENT_STATUS_FORMATS = {
     'Scan': "Scan Data stored for Cartographics",
     'Scanned': "You have been scanned",
     'SupercruiseEntry': "Entered Supercruise",
-    'SupercruiseExit': "Exited Supercruise",
+    'SupercruiseExit': "Dropped out within cooee of {Body}",
     'Touchdown': "Touchdown!",
     'Undocked': "Undocked",
 }
