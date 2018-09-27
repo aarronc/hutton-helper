@@ -26,7 +26,7 @@ class CommandPlugin(plugin.HuttonHelperPlugin):
         'race start': '/racestart',
         'race end': '/raceend',
         'exploration start': '/explostart',
-        'reset exploration data': '/exploreset',
+        'reset exploration data': '/exploreset',  # vaguely safe for testing
         'inf reload': '/devinfreload',
         'allow list reload': '/devallowreload',
         'black ops add': '/blopsadd',
@@ -34,7 +34,7 @@ class CommandPlugin(plugin.HuttonHelperPlugin):
         'black ops reset': '/normalrunning',
         'auth list reload': '/authlistreload',
         'explo system': '/explosystem.json/{cmdr}/{system}',
-        'best hutton run': '/besthuttonrun.json/{cmdr}'
+        'best hutton run': '/besthuttonrun.json/{cmdr}'  # safe for testing
     }
 
     status_formats = {
@@ -87,7 +87,7 @@ class CommandPlugin(plugin.HuttonHelperPlugin):
                     else:
                         json_data = xmit.post(command_xmit_path, data=transmit_json, headers=xmit.COMPRESSED_OCTET_STREAM)
 
-                if not json_data:
+                if xmit.FAILED:  # naughty global
                     command_status_format = 'Failed to Send {command} Command'
 
                 # Format and display the status text:

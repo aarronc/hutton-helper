@@ -12,6 +12,8 @@ XMIT_URL = 'http://forthemug.com:4567'
 DEFAULT_TIMEOUT = 7
 COMPRESSED_OCTET_STREAM = {'content-type': 'application/octet-stream', 'content-encoding': 'zlib'}
 
+FAILED = False
+
 
 def request(path_or_url, base=XMIT_URL, method='get', parse=True, **kwargs):
     """
@@ -40,6 +42,7 @@ def request(path_or_url, base=XMIT_URL, method='get', parse=True, **kwargs):
 
     try:
         began = time.time()
+        FAILED = False
         response = getattr(requests, method)(url, timeout=DEFAULT_TIMEOUT, **kwargs)
         delay = (time.time() - began) * 1000
         sys.stderr.write("{} {} {} ms={:.0f}\r\n".format(response.status_code, method.upper(), url, delay))
@@ -50,6 +53,7 @@ def request(path_or_url, base=XMIT_URL, method='get', parse=True, **kwargs):
                     return response.json()
 
                 except ValueError:
+                    FAILED = True
                     sys.stderr.write('Unable to parse JSON: ')
                     pass # fall through to stderr and None
 
@@ -59,6 +63,7 @@ def request(path_or_url, base=XMIT_URL, method='get', parse=True, **kwargs):
         elif response.status_code == 204:
             return ''
 
+        FAILED = True
         sys.stderr.write(repr(response.content))
         sys.stderr.write('\r\n')
 
