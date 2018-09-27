@@ -58,6 +58,7 @@ class CommandPlugin(plugin.HuttonHelperPlugin):
     def __init__(self, helper):
         "Initialise the ``CommandPlugin``."
 
+        plugin.HuttonHelperPlugin.__init__(self, helper)
         self.commands = set(self.xmit_paths.keys()) | set(self.status_formats.keys())
 
     def journal_entry(self, cmdr, is_beta, system, station, entry, state):
@@ -78,10 +79,10 @@ class CommandPlugin(plugin.HuttonHelperPlugin):
 
                 # Send the event if required, getting json_data back:
                 json_data = None
-                command_xmit_path = self.xmit_paths.get(command)
-                if command_xmit_path:
-                    command_xmit_path = command_xmit_path.format(cmdr=cmdr, system=system)
-                    if '{cmdr}' in command_xmit_path: # FILTHY hack to figure out if it's a 'get'
+                command_xmit_path_format = self.xmit_paths.get(command)
+                if command_xmit_path_format:
+                    command_xmit_path = command_xmit_path_format.format(cmdr=cmdr, system=system)
+                    if '{cmdr}' in command_xmit_path_format: # FILTHY hack to figure out if it's a 'get'
                         json_data = xmit.get(command_xmit_path)
                     else:
                         json_data = xmit.post(command_xmit_path, data=transmit_json, headers=xmit.COMPRESSED_OCTET_STREAM)

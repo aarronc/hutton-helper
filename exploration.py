@@ -20,10 +20,10 @@ CFG_SHOW_EXPLORATION = 'ShowExploValue'
 class ExplorationPlugin(plugin.HuttonHelperPlugin):
     "Tracks exploration data gathering."
 
-    def __init__(self, config):
+    def __init__(self, helper):
         "Initialise the ``ExplorationPlugin``."
 
-        plugin.HuttonHelperPlugin.__init__(self, config)
+        plugin.HuttonHelperPlugin.__init__(self, helper)
         self.frame = None
         self.cmdr = None
         self.credits = None
