@@ -2,4 +2,4 @@
 Supplies a version number.
 """
 
-HH_VERSION = '2.1.14'
+HH_VERSION = '2.1.15'
