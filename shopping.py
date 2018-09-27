@@ -169,10 +169,10 @@ def extract_commodity(entry):
 class ShoppingListPlugin(plugin.HuttonHelperPlugin):
     "Tracks mission shopping lists."
 
-    def __init__(self, config):
+    def __init__(self, helper):
         "Initialise the ``ShoppingListPlugin``."
 
-        plugin.HuttonHelperPlugin.__init__(self, config)
+        plugin.HuttonHelperPlugin.__init__(self, helper)
         self.table_frame = None
         self.missions = []
         self.cargo = {}

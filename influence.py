@@ -24,10 +24,10 @@ FACTIONS = set([
 class InfluencePlugin(plugin.HuttonHelperPlugin):
     "Tracks mission shopping lists."
 
-    def __init__(self, config):
+    def __init__(self, helper):
         "Initialise the ``InfluencePlugin``."
 
-        plugin.HuttonHelperPlugin.__init__(self, config)
+        plugin.HuttonHelperPlugin.__init__(self, helper)
         self.label = None
         self.in_faction_space = False
 

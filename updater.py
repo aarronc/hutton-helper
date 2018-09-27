@@ -129,10 +129,10 @@ def update(zipfile_url, digest):
 class UpdatePlugin(plugin.HuttonHelperPlugin):
     "An update plugin."
 
-    def __init__(self, config):
+    def __init__(self, helper):
         "Initialise the ``UpdatePlugin``."
 
-        plugin.HuttonHelperPlugin.__init__(self, config)
+        plugin.HuttonHelperPlugin.__init__(self, helper)
 
         self.remote_version = None
         self.zipfile_url = None
