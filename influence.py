@@ -43,12 +43,10 @@ class InfluencePlugin(plugin.HuttonHelperPlugin):
         self.system_label = ttk.Label(frame, text="SYSTEM", anchor=tk.NW)
         self.state_label = ttk.Label(frame, text="STATE", anchor=tk.NW)
         self.influence_label = ttk.Label(frame, text="23.0%", anchor=tk.NE)
-        self.margin_label = ttk.Label(frame, text="(+2%)", anchor=tk.NE)
 
         self.system_label.grid(row=1, column=0, sticky=tk.EW)
         self.state_label.grid(row=1, column=1, sticky=tk.EW)
         self.influence_label.grid(row=1, column=2, sticky=tk.EW)
-        self.margin_label.grid(row=1, column=3, sticky=tk.EW)
 
         enabled = self.helper.prefs.setdefault(CFG_SHOW_INFLUENCE, True)
         self.enabled_intvar = tk.IntVar(value=1 if enabled else 0)
@@ -84,7 +82,6 @@ class InfluencePlugin(plugin.HuttonHelperPlugin):
         "Act like a tiny EDMC plugin."
 
         if entry['event'] == 'FSDJump':
-            influence_them = float('-inf')
             influence_us = float('-inf')
             state_us = ""
 
@@ -92,8 +89,6 @@ class InfluencePlugin(plugin.HuttonHelperPlugin):
                 if faction['Name'] in FACTIONS:
                     influence_us = faction['Influence']
                     state_us = faction['FactionState']
-                else:
-                    influence_them = max([influence_them, faction['Influence']])
 
             self.system_label['text'] = entry['StarSystem']
             self.in_faction_space = not (influence_us < 0)
@@ -101,12 +96,10 @@ class InfluencePlugin(plugin.HuttonHelperPlugin):
             if self.in_faction_space:
                 self.state_label['text'] = state_us
                 self.influence_label['text'] = '{:.1f}%'.format(100 * influence_us)
-                self.margin_label['text'] = '(by {:.1f}%)'.format(100 * (influence_us - influence_them))
 
             else:
                 self.state_label['text'] = 'N/A'
                 self.influence_label['text'] = 'N/A'
-                self.margin_label['text'] = 'N/A'
 
             self.__update_hidden()
 
