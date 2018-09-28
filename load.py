@@ -1,6 +1,5 @@
 "The Hutton Helper. For the Mug!"
 
-from version import HH_VERSION
 
 import json
 import os
@@ -42,6 +41,9 @@ try:
     import widgets
     import xmit
     import market
+    import panic
+
+    from version import HH_VERSION
 
 finally:
     del sys.path[0]
@@ -49,7 +51,7 @@ finally:
 this = sys.modules[__name__]  # pylint: disable=C0103
 this.msg = ""
 
-FRONT_COVER_DELAY = 5  # seconds
+FRONT_COVER_DELAY = 10  # seconds
 
 
 def PANIC(description=None):
@@ -75,6 +77,7 @@ def plugin_start():
         progress.ProgressPlugin(this.helper),
         exploration.ExplorationPlugin(this.helper),
         market.MarketPlugin(this.helper),
+        panic.PanicPlugin(this.helper),
     ]
 
     for plugin in plugins:
