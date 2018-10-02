@@ -15,6 +15,7 @@ import myNotebook as nb
 
 
 CFG_SHOW_EXPLORATION = 'ShowExploValue'
+MAX_FAILS = 2
 
 
 class ExplorationPlugin(plugin.HuttonHelperPlugin):
@@ -28,6 +29,7 @@ class ExplorationPlugin(plugin.HuttonHelperPlugin):
         self.cmdr = None
         self.credits = None
         self.checking = False
+        self.fails = 0
 
     def __reset(self, cmdr=None):
         "Reset the ``ExplorationPlugin``."
@@ -119,16 +121,36 @@ class ExplorationPlugin(plugin.HuttonHelperPlugin):
         if self.checking:
             return
 
+        if self.fails > MAX_FAILS:
+            self.__fail_safe()  # again in case self.textvariable was None last time
+            return
+
         try:
             self.checking = True
             path = '/explocredit.json/{}'.format(self.cmdr)
             json_data = xmit.get(path)
+
             self.credits = float(json_data['ExploCredits'])
 
             if self.textvariable:
                 self.textvariable.set("at least {:,.0f}".format(self.credits))
 
+            self.fails = 0
             self.refresh()
+
+        except:
+            self.fails = self.fails + 1
+            print 'FAIL', self.fails
+            if self.fails > MAX_FAILS:
+                self.__fail_safe()
 
         finally:
             self.checking = False
+
+    def __fail_safe(self):
+        "Fail."
+
+        self.credits = 'DISABLED'
+        if self.textvariable:
+            self.textvariable.set("Disabled (#62)")
+        self.refresh()
