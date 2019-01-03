@@ -356,7 +356,13 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
     elif event == 'SellExplorationData':
         baseval = entry['BaseValue']
         bonusval = entry['Bonus']
-        totalvalue = baseval + bonusval
+        totalvalue = entry['TotalEarnings']
+        this.status['text'] = "Sold ExplorationData for {:,.0f} credits".format(float(totalvalue))
+        
+    elif event == 'MultiSellExplorationData':
+        baseval = entry['BaseValue']
+        bonusval = entry['Bonus']
+        totalvalue = entry['TotalEarnings']
         this.status['text'] = "Sold ExplorationData for {:,.0f} credits".format(float(totalvalue))
 
 

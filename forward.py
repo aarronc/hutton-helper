@@ -38,10 +38,13 @@ class ForTheMugPlugin(plugin.HuttonHelperPlugin):
         'Rank': '/rank',
         'Scan': '/scan',
         'SellExplorationData': '/explorationdata',
+        'MultiSellExplorationData': '/multisellexplorationdata',
         'Statistics': '/stats',
         'SupercruiseEntry': '/supercruiseentry',
         'SupercruiseExit': '/supercruiseexit',
         'Undocked': '/undockedinfoupdate',
+        'FSSSignalDiscovered': '/fsssignaldiscovered',
+        'SAAScanComplete': '/saascancomplete',
     }
 
     def journal_entry(self, cmdr, is_beta, system, station, entry, state):
