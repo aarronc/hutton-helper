@@ -34,7 +34,8 @@ class CommandPlugin(plugin.HuttonHelperPlugin):
         'black ops reset': '/normalrunning',
         'auth list reload': '/authlistreload',
         'explo system': '/explosystem.json/{cmdr}/{system}',
-        'best hutton run': '/besthuttonrun.json/{cmdr}'  # safe for testing
+        'best hutton run': '/besthuttonrun.json/{cmdr}',  # safe for testing
+        'are we there yet': '/huttontimer.json/{cmdr}' # Calls a commanders current Hutton Run Time
     }
 
     status_formats = {
@@ -53,6 +54,7 @@ class CommandPlugin(plugin.HuttonHelperPlugin):
         'auth list reload': "Admin Mode : Reloaded Auth List",
         'explo system': "You Have sold {ExplorationSystemTotal:,.0f} credits in {system} today",
         'best hutton run': "BEST Hutton Run is CMDR {commandername} in {TravelTime}",
+        'are we there yet': '{info}'
     }
 
     def __init__(self, helper):
