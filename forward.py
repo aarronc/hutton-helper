@@ -47,7 +47,8 @@ class ForTheMugPlugin(plugin.HuttonHelperPlugin):
         'SAAScanComplete': '/saascancomplete',
         'ProspectedAsteroid': '/prospectedasteroid',
         'MiningRefined': '/miningrefined',
-        'SquadronStartup': '/squadronstartup'
+        'SquadronStartup': '/squadronstartup',
+        'CommitCrime': '/commitcrime'
         }
 
     def journal_entry(self, cmdr, is_beta, system, station, entry, state):
