@@ -11,6 +11,7 @@ import traceback
 import ttk
 import zlib
 import tkFont
+from canonnevents import whiteList
 
 from ttkHyperlinkLabel import HyperlinkLabel
 from config import config # applongname, appversion
@@ -96,6 +97,11 @@ def plugin_app(parent):
     sticky = tk.EW + tk.N  # full width, stuck to the top
     anchor = tk.NW
 
+    # we declare a whitelist object so we can run a timer to fetch the event whitelist from Canonn
+    # This is so that we can find out what events to transmit There is no UI associated
+    Canonn=whiteList(parent)
+    Canonn.fetchData()    
+    
     frame = this.frame = tk.Frame(parent)
     frame.columnconfigure(0, weight=1)
 
@@ -291,6 +297,12 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
     :return:
     """
 
+    #we are going to send events to Canonn, The whitelist tells us which ones
+    try:
+        whiteList.journal_entry(cmdr, is_beta, system, station, entry, state,"Hutton-Helper-{}".format(HH_VERSION))
+    except:
+        print("Canonn failed, but don't let that stop you")
+    
     if is_beta:
         this.status['text'] = 'Disabled due to beta'
         return
