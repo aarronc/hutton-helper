@@ -276,7 +276,7 @@ EVENT_STATUS_FORMATS = {
     'SupercruiseEntry': "Entered Supercruise",
     'SupercruiseExit': "Dropped out within cooee of {Body}",
     'Touchdown': "Touchdown!",
-    'Undocked': "Undocked"
+    'Undocked': "Undocked",
     'USSDrop' : "Dropped into {USSType_Localised} Threat : {USSThreat}"
 }
 

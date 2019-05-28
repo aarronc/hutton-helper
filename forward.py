@@ -23,7 +23,7 @@ class ForTheMugPlugin(plugin.HuttonHelperPlugin):
         'CommunityGoal': '/communitygoal',
         'Died': '/death',
         'Docked': '/dockedinfoupdate',
-        'EjectCargo': '/ejectcargo,'
+        'EjectCargo': '/ejectcargo',
         'FactionKillBond': '/factionkillbond',
         'FSDJump': '/fsdjump',
         'LoadGame': '/loadgame',
