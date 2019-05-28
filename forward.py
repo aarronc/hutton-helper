@@ -19,9 +19,11 @@ class ForTheMugPlugin(plugin.HuttonHelperPlugin):
         'Cargo': '/cargo',
         'CargoDepot': '/cargodepot',
         'CollectCargo': '/cargocollection',
+        'CommitCrime': '/commitcrime',
         'CommunityGoal': '/communitygoal',
         'Died': '/death',
         'Docked': '/dockedinfoupdate',
+        'EjectCargo': '/ejectcargo,'
         'FactionKillBond': '/factionkillbond',
         'FSDJump': '/fsdjump',
         'LoadGame': '/loadgame',
@@ -36,6 +38,7 @@ class ForTheMugPlugin(plugin.HuttonHelperPlugin):
         'NpcCrewPaidWage': '/npccrewpaidwage',
         'Promotion': '/cmdrpromotion',
         'Rank': '/rank',
+        'ReceiveText': '/receivetext',
         'Scan': '/scan',
         'SellExplorationData': '/explorationdata',
         'MultiSellExplorationData': '/multisellexplorationdata',
@@ -48,7 +51,7 @@ class ForTheMugPlugin(plugin.HuttonHelperPlugin):
         'ProspectedAsteroid': '/prospectedasteroid',
         'MiningRefined': '/miningrefined',
         'SquadronStartup': '/squadronstartup',
-        'CommitCrime': '/commitcrime'
+        'USSDrop' : '/ussdrop'
         }
 
     def journal_entry(self, cmdr, is_beta, system, station, entry, state):

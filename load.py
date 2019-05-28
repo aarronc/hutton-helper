@@ -100,8 +100,8 @@ def plugin_app(parent):
     # we declare a whitelist object so we can run a timer to fetch the event whitelist from Canonn
     # This is so that we can find out what events to transmit There is no UI associated
     Canonn=whiteList(parent)
-    Canonn.fetchData()    
-    
+    Canonn.fetchData()
+
     frame = this.frame = tk.Frame(parent)
     frame.columnconfigure(0, weight=1)
 
@@ -260,6 +260,7 @@ EVENT_STATUS_FORMATS = {
     'DockingDenied': "Docking Denied",
     'DockingGranted': "Docking request granted",
     'DockingTimeout': "Docking Timed out",
+    'EscapeInterdiction': "Phew!, that was close {Interdictor} almost got you!",
     'FSDJump': "Jumped into {StarSystem} system",
     'HeatWarning': "Its getting warm in here",
     'LeaveBody': "Leaving Gravitational Well",
@@ -275,7 +276,8 @@ EVENT_STATUS_FORMATS = {
     'SupercruiseEntry': "Entered Supercruise",
     'SupercruiseExit': "Dropped out within cooee of {Body}",
     'Touchdown': "Touchdown!",
-    'Undocked': "Undocked",
+    'Undocked': "Undocked"
+    'USSDrop' : "Dropped into {USSType_Localised} Threat : {USSThreat}"
 }
 
 REDEEM_TYPE_STATUS_FORMATS = {
@@ -302,7 +304,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
         whiteList.journal_entry(cmdr, is_beta, system, station, entry, state,"Hutton-Helper-{}".format(HH_VERSION))
     except:
         print("Canonn failed, but don't let that stop you")
-    
+
     if is_beta:
         this.status['text'] = 'Disabled due to beta'
         return
@@ -370,7 +372,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
         bonusval = entry['Bonus']
         totalvalue = entry['TotalEarnings']
         this.status['text'] = "Sold ExplorationData for {:,.0f} credits".format(float(totalvalue))
-        
+
     elif event == 'MultiSellExplorationData':
         baseval = entry['BaseValue']
         bonusval = entry['Bonus']
