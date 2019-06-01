@@ -8,7 +8,7 @@ import uuid
 from widgets import SelfWrappingHyperlinkLabel
 import xmit
 
-REFRESH_MINUTES = 5
+REFRESH_MINUTES = 3
 DEFAULT_NEWS_URL = 'http://hot.forthemug.com/dailyupdate/index.php'
 WRAP_LENGTH = 200
 uptime_stats = uuid.uuid4()
