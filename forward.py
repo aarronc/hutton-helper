@@ -61,7 +61,7 @@ class ForTheMugPlugin(plugin.HuttonHelperPlugin):
         extra_paths = xmit.get(ADDITIONAL_PATHS_URL)
 
         if extra_paths is not None:
-            self.event_paths.update(extra_paths)
+            event_paths = extra_paths
 
 
 
