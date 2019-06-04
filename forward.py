@@ -10,10 +10,10 @@ import zlib
 import plugin
 import xmit
 
-ADDITIONAL_PATHS_URL = 'http://hot.forthemug.com:4567/events_list.json'
+ADDITIONAL_PATHS_URL = 'http://hot.forthemug.com/events_list.json'
 
 class ForTheMugPlugin(plugin.HuttonHelperPlugin):
-    "Forwards data to the Hutton Helper Server"
+    "Forwards data to the Hutton Helper Server."
 
     event_paths = {
         'Bounty': '/bounty',
@@ -56,11 +56,13 @@ class ForTheMugPlugin(plugin.HuttonHelperPlugin):
         }
 
 
-    def __init__():
-        try:
-            extra_paths = xmit.get(ADDITIONAL_PATHS_URL)
-        if extra_paths:
-            event_paths.update(extra_paths)
+    def plugin_start(self):
+        "Called once at startup. Try to keep it short..."
+        extra_paths = xmit.get(ADDITIONAL_PATHS_URL)
+
+        if extra_paths is not None:
+            self.event_paths.update(extra_paths)
+
 
 
     def journal_entry(self, cmdr, is_beta, system, station, entry, state):
