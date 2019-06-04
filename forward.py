@@ -10,9 +10,10 @@ import zlib
 import plugin
 import xmit
 
+ADDITIONAL_PATHS_URL = 'http://hot.forthemug.com:4567/events_list.json'
 
 class ForTheMugPlugin(plugin.HuttonHelperPlugin):
-    "Forwards data to the CGThreshCalc team."
+    "Forwards data to the Hutton Helper Server"
 
     event_paths = {
         'Bounty': '/bounty',
@@ -53,6 +54,14 @@ class ForTheMugPlugin(plugin.HuttonHelperPlugin):
         'SquadronStartup': '/squadronstartup',
         'USSDrop' : '/ussdrop'
         }
+
+
+    def __init__():
+        try:
+            extra_paths = xmit.get(ADDITIONAL_PATHS_URL)
+        if extra_paths:
+            event_paths.update(extra_paths)
+
 
     def journal_entry(self, cmdr, is_beta, system, station, entry, state):
         "Called when Elite Dangerous writes to the commander's journal."
