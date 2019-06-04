@@ -10,7 +10,7 @@ import zlib
 import plugin
 import xmit
 
-ADDITIONAL_PATHS_URL = 'http://hot.forthemug.com/events_list.json'
+ADDITIONAL_PATHS_URL = 'http://hot.forthemug.com/event_paths.json'
 
 class ForTheMugPlugin(plugin.HuttonHelperPlugin):
     "Forwards data to the Hutton Helper Server."
@@ -61,7 +61,7 @@ class ForTheMugPlugin(plugin.HuttonHelperPlugin):
         extra_paths = xmit.get(ADDITIONAL_PATHS_URL)
 
         if extra_paths is not None:
-            event_paths = extra_paths
+            self.event_paths = extra_paths
 
 
 
