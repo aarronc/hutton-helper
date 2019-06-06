@@ -52,9 +52,12 @@ class ForTheMugPlugin(plugin.HuttonHelperPlugin):
         'ProspectedAsteroid': '/prospectedasteroid',
         'MiningRefined': '/miningrefined',
         'SquadronStartup': '/squadronstartup',
-        'USSDrop' : '/ussdrop'
-        }
-
+        'USSDrop' : '/ussdrop',
+        "Friends" : "/friends",
+        "Interdicted" : "/interdicted",
+        "Interdiction" : "/interdiction",
+        "EscapeInterdiction" : "/escapeinterdiction"
+    }
 
     def plugin_start(self):
         "Called once at startup. Try to keep it short..."
