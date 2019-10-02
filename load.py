@@ -6,17 +6,17 @@ import os
 import sys
 import textwrap
 import time
-import Tkinter as tk
+import tkinter as tk
 import traceback
-import ttk
+import tkinter.ttk as ttk
 import zlib
-import tkFont
+import tkinter.font as tkFont
 from canonnevents import whiteList
 
 from ttkHyperlinkLabel import HyperlinkLabel
 from config import config # applongname, appversion
 import myNotebook as nb
-import tkMessageBox
+import tkinter.messagebox
 
 import requests # still here for CG code
 
@@ -63,7 +63,7 @@ def PANIC(description=None):
     traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stderr)
 
 
-def plugin_start():
+def plugin_start3(plugin_dir):
     "Initialise the Hutton Helper plugin."
 
     this.helper = plugin_module.HuttonHelperHelper(config, _refresh, _status)
@@ -397,7 +397,7 @@ def cmdr_data(data, is_beta):
 def plugin_stop():
     "Called once at shutdown."
 
-    print "Farewell cruel world!"
+    print("Farewell cruel world!")
     for plugin in this.plugins:
         try:
             plugin.plugin_stop()

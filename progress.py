@@ -6,7 +6,7 @@ import collections
 import datetime
 import math
 import time
-import Tkinter as tk
+import tkinter as tk
 
 import plugin
 import xmit

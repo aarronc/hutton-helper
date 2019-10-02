@@ -4,8 +4,8 @@ Module to provide exploration credit tracking.
 
 import json
 import sys
-import Tkinter as tk
-import ttk
+import tkinter as tk
+import tkinter.ttk as ttk
 import zlib
 
 import plugin
@@ -144,7 +144,7 @@ class ExplorationPlugin(plugin.HuttonHelperPlugin):
 
         except:
             self.fails = self.fails + 1
-            print 'FAIL', self.fails
+            print('FAIL', self.fails)
             if self.fails > MAX_FAILS:
                 self.__fail_safe()
 

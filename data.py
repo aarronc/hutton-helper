@@ -2,7 +2,7 @@
 Looks after our data.
 """
 
-import os
+import os, sys
 
 import config  # EDMC
 
@@ -19,7 +19,7 @@ def get_data_path(*args):
     if os.path.exists(data_path):
         assert os.path.isdir(data_path)
     else:
-        os.mkdir(data_path, mode=0755)
+        os.mkdir(data_path, 755)
 
     return os.path.join(data_path, *args)
 

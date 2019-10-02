@@ -3,7 +3,7 @@
 Module to provide the news.
 """
 
-import Tkinter as tk
+import tkinter as tk
 import uuid
 from widgets import SelfWrappingHyperlinkLabel
 import xmit

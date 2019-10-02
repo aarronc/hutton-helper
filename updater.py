@@ -5,14 +5,14 @@ Update mechanism.
 from version import HH_VERSION
 
 import collections
-import ConfigParser
+import configparser
 import hashlib
 import json
 import os
-import StringIO
+from io import StringIO
 import sys
-import Tkinter as tk
-import urlparse
+import tkinter as tk
+import urllib.parse
 import zipfile
 
 import xmit
@@ -31,7 +31,7 @@ HH_PLUGIN_DIRECTORY = os.path.dirname(os.path.realpath(__file__))
 HH_CONFIG_FILE = os.path.join(HH_PLUGIN_DIRECTORY, 'hutton.ini')
 
 if os.path.exists(HH_CONFIG_FILE):
-    HH_CONFIG = ConfigParser.SafeConfigParser()
+    HH_CONFIG = configparser.SafeConfigParser()
     HH_CONFIG.read(HH_CONFIG_FILE)
     if HH_CONFIG.has_option('updates', 'version_url'):
         HH_VERSION_URL = HH_CONFIG.get('updates', 'version_url')

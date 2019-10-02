@@ -5,8 +5,8 @@ You'd better stock up on land mines for that trip, Commander.
 import json
 import sys
 import time
-import Tkinter as tk
-import ttk
+import tkinter as tk
+import tkinter.ttk as ttk
 
 import plugin
 

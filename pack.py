@@ -7,7 +7,7 @@ from version import HH_VERSION
 import hashlib
 import json
 import os
-import StringIO
+from io import StringIO
 import sys
 import zipfile
 

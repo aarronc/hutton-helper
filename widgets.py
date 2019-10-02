@@ -3,9 +3,9 @@ Various display widgets.
 """
 
 import collections
-import tkFont
-import Tkinter as tk
-import ttk
+import tkinter.font as tkFont
+import tkinter as tk
+import tkinter.ttk as ttk
 
 from ttkHyperlinkLabel import HyperlinkLabel
 
