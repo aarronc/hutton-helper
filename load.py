@@ -310,6 +310,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
         return
 
     entry['commandername'] = cmdr
+    news.commander = cmdr
     entry['hhstationname'] = station
     entry['hhsystemname'] = system
     entry['huttonappversion'] = HH_VERSION

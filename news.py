@@ -4,15 +4,13 @@ Module to provide the news.
 """
 
 import Tkinter as tk
-import uuid
 from widgets import SelfWrappingHyperlinkLabel
 import xmit
 
 REFRESH_MINUTES = 3
 DEFAULT_NEWS_URL = 'http://hot.forthemug.com/dailyupdate/index.php'
 WRAP_LENGTH = 200
-uptime_stats = uuid.uuid4()
-
+commander = ""
 
 class HuttonNews(SelfWrappingHyperlinkLabel):
     "A label to display the headline and link to the news. Not a plugin because it doesn't have preferences or watch the pilot."
@@ -35,10 +33,20 @@ class HuttonNews(SelfWrappingHyperlinkLabel):
 
         self.after(REFRESH_MINUTES * 60 * 1000, self.news_update)
 
-        news_data = xmit.get('/news.json/{}'.format(uptime_stats))
-        if news_data:
-            self['url'] = news_data['link']
-            self['text'] = news_data['headline']
+        if commander: # if we have commander name ask for specific news
+            news_data = xmit.get('/news.json/{}'.format(commander))
+            if news_data:
+                self['url'] = news_data['link']
+                self['text'] = news_data['headline']
 
-        else:
-            self['text'] = "News refresh failed"
+            else:
+                self['text'] = "News refresh failed"
+
+        else: # Get normal news
+            news_data = xmit.get('/news.json/{}')
+            if news_data:
+                self['url'] = news_data['link']
+                self['text'] = news_data['headline']
+
+            else:
+                self['text'] = "News refresh failed"
