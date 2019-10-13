@@ -315,6 +315,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
     entry['huttonappversion'] = HH_VERSION
 
     compress_json = json.dumps(entry)
+    compress_json = compress_json.encode('utf-8')
     transmit_json = zlib.compress(compress_json)
 
     event = entry['event']

@@ -12,7 +12,7 @@ import os
 from io import StringIO
 import sys
 import tkinter as tk
-import urllib.parse
+import urllib.parse as urlparse
 import zipfile
 
 import xmit
@@ -91,7 +91,7 @@ def get_version_info():
         return None
 
     version = info['version'].encode('ascii')
-    location = info['location'].encode('ascii')
+    location = info['location']
     digest = info['digest'].encode('ascii')
 
     zipfile_url = urlparse.urljoin(HH_VERSION_URL, location)
