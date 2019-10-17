@@ -28,7 +28,6 @@ try:
     # we've altered sys.path so we don't inhale files from EDMC "package"
     # plugins by accident. https://git.io/fAQkf#python-package-plugins
 
-    import cgt
     import exploration
     import forward
     import influence
@@ -70,7 +69,6 @@ def plugin_start():
     this.plugins = [
         # A list of plugins to which we pass events.
         updater.UpdatePlugin(this.helper),
-        cgt.CommunityGoalWatcher(this.helper),
         forward.ForTheMugPlugin(this.helper),
         local.CommandPlugin(this.helper),
         shopping.ShoppingListPlugin(this.helper),
