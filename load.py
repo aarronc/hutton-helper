@@ -272,7 +272,7 @@ EVENT_STATUS_FORMATS = {
     'Scan': "Scan Data stored for Cartographics",
     'Scanned': "You have been scanned",
     'SupercruiseEntry': "Entered Supercruise",
-    'SupercruiseExit': "Dropped out within cooee of {Body}",
+    'SupercruiseExit': "Dropped out within range of {Body}",
     'Touchdown': "Touchdown!",
     'Undocked': "Undocked",
     'USSDrop' : "Dropped into {USSType_Localised} Threat : {USSThreat}"
