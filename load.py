@@ -345,10 +345,10 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
     if event == 'MarketBuy':
         # For some events, we need our status to be based on translations of the event that
         # string.format can't do without a scary custom formatter:
-        this.status['text'] = "{:,.0f} {} bought".format(float(entry['Count']), entry['Type'])
+        this.status['text'] = "{:,.0f} {} bought".format(float(entry['Count']), entry['Type_Localised'])
 
     elif event == 'MarketSell':
-        this.status['text'] = "{:,.0f} {} sold".format(float(entry['Count']), entry['Type'])
+        this.status['text'] = "{:,.0f} {} sold".format(float(entry['Count']), entry['Type_Localised'])
 
     elif event == 'FactionKillBond':
         this.status['text'] = "Kill Bond Earned for {:,.0f} credits".format(float(entry['Reward']))
