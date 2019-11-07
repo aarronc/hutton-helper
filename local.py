@@ -35,7 +35,8 @@ class CommandPlugin(plugin.HuttonHelperPlugin):
         'auth list reload': '/authlistreload',
         'explo system': '/explosystem.json/{cmdr}/{system}',
         'best hutton run': '/besthuttonrun.json/{cmdr}',  # safe for testing
-        'are we there yet': '/huttontimer.json/{cmdr}' # Calls a commanders current Hutton Run Time
+        'are we there yet': '/huttontimer.json/{cmdr}', # Calls a commanders current Hutton Run Time
+        'mugify' : '/verify'
     }
 
     status_formats = {
