@@ -36,7 +36,8 @@ class CommandPlugin(plugin.HuttonHelperPlugin):
         'explo system': '/explosystem.json/{cmdr}/{system}',
         'best hutton run': '/besthuttonrun.json/{cmdr}',  # safe for testing
         'are we there yet': '/huttontimer.json/{cmdr}', # Calls a commanders current Hutton Run Time
-        'mugify' : '/verify'
+        'mugify' : '/verify',
+        'Mugify' : '/verify'
     }
 
     status_formats = {
