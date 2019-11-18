@@ -29,6 +29,7 @@ class ForTheMugPlugin(plugin.HuttonHelperPlugin):
       "FactionKillBond": "/factionkillbond",
       "Friends" : "/friends",
       "FSDJump": "/fsdjump",
+      "FSSAllBodiesFound": "/fssallbodiesfound",
       "FSSSignalDiscovered": "/fsssignaldiscovered",
       "Interdicted" : "/interdicted",
       "Interdiction" : "/interdiction",
