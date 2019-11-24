@@ -35,7 +35,9 @@ class CommandPlugin(plugin.HuttonHelperPlugin):
         'auth list reload': '/authlistreload',
         'explo system': '/explosystem.json/{cmdr}/{system}',
         'best hutton run': '/besthuttonrun.json/{cmdr}',  # safe for testing
-        'are we there yet': '/huttontimer.json/{cmdr}' # Calls a commanders current Hutton Run Time
+        'are we there yet': '/huttontimer.json/{cmdr}', # Calls a commanders current Hutton Run Time
+        'mugify' : '/verify',
+        'Mugify' : '/verify'
     }
 
     status_formats = {
@@ -114,16 +116,3 @@ class CommandPlugin(plugin.HuttonHelperPlugin):
 
             else:
                 self.helper.status("Your best Hutton Run is {}".format(json_data['TravelTime']))
-
-        if "!shoutout" in entry['Message']:
-            json_data = xmit.get('/shoutout.json')
-
-            if not json_data:
-                self.helper.status("Could not shout, shout, or let it all out.")
-
-            elif json_data['online'] == "true":
-                self.helper.status("Shoutout sent to the LIVE DJ")
-                xmit_event('/shoutout')
-
-            if json_data['online'] == "false":
-                self.helper.status("There is no LIVE DJ at the moment... please try again later")

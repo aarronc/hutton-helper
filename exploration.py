@@ -100,7 +100,8 @@ class ExplorationPlugin(plugin.HuttonHelperPlugin):
             reset_path = '/exploreset'
             compress_json_reset = json.dumps(entry)
             transmit_json_reset = zlib.compress(compress_json_reset)
-            xmit.post(reset_path, data=transmit_json, parse=False, headers=xmit.COMPRESSED_OCTET_STREAM)
+            xmit.post(reset_path, data=transmit_json_reset, parse=False, headers=xmit.COMPRESSED_OCTET_STREAM)
+            self.__check_again()
 
         if self.__reset(cmdr=cmdr) or entry['event'] == 'Scan' or not self.ready:
             self.__check_again()

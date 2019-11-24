@@ -28,7 +28,6 @@ try:
     # we've altered sys.path so we don't inhale files from EDMC "package"
     # plugins by accident. https://git.io/fAQkf#python-package-plugins
 
-    import cgt
     import exploration
     import forward
     import influence
@@ -70,7 +69,6 @@ def plugin_start3(plugin_dir):
     this.plugins = [
         # A list of plugins to which we pass events.
         updater.UpdatePlugin(this.helper),
-        cgt.CommunityGoalWatcher(this.helper),
         forward.ForTheMugPlugin(this.helper),
         local.CommandPlugin(this.helper),
         shopping.ShoppingListPlugin(this.helper),
@@ -274,7 +272,7 @@ EVENT_STATUS_FORMATS = {
     'Scan': "Scan Data stored for Cartographics",
     'Scanned': "You have been scanned",
     'SupercruiseEntry': "Entered Supercruise",
-    'SupercruiseExit': "Dropped out within cooee of {Body}",
+    'SupercruiseExit': "Dropped out within range of {Body}",
     'Touchdown': "Touchdown!",
     'Undocked': "Undocked",
     'USSDrop' : "Dropped into {USSType_Localised} Threat : {USSThreat}"
@@ -310,6 +308,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
         return
 
     entry['commandername'] = cmdr
+    news.commander = cmdr
     entry['hhstationname'] = station
     entry['hhsystemname'] = system
     entry['huttonappversion'] = HH_VERSION
@@ -347,10 +346,10 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
     if event == 'MarketBuy':
         # For some events, we need our status to be based on translations of the event that
         # string.format can't do without a scary custom formatter:
-        this.status['text'] = "{:,.0f} {} bought".format(float(entry['Count']), entry['Type'])
+        this.status['text'] = "{:,.0f} {} bought".format(float(entry['Count']), entry['Type_Localised'])
 
     elif event == 'MarketSell':
-        this.status['text'] = "{:,.0f} {} sold".format(float(entry['Count']), entry['Type'])
+        this.status['text'] = "{:,.0f} {} sold".format(float(entry['Count']), entry['Type_Localised'])
 
     elif event == 'FactionKillBond':
         this.status['text'] = "Kill Bond Earned for {:,.0f} credits".format(float(entry['Reward']))
