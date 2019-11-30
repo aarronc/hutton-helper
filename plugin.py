@@ -6,9 +6,17 @@ Each is almost an EDMC plugin in its own right.
 
 import json
 import sys
-from collections import UserDict
-from collections import MutableMapping as DictMixin
-import collections
+try:
+    # for Python2
+    import UserDict
+    is2 = True
+except ImportError:
+    # for python 3
+    from collections import UserDict
+    from collections import MutableMapping as DictMixin
+    from collections import MutableMapping
+    import collections
+    is2 = False
 
 
 def add_config_prefix(key):
@@ -17,7 +25,7 @@ def add_config_prefix(key):
     return 'HuttonHelper{}'.format(key)
 
 
-class HuttonHelperPreferences(collections.MutableMapping):
+class HuttonHelperPreferences(UserDict.DictMixin if is2 else collections.MutableMapping):
     """
     Stores Hutton Helper preferences in EDMC config.
 

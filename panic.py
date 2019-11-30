@@ -2,7 +2,12 @@
 Module to suppress the DON'T PANIC message for commanders who like it tidy.
 """
 
-import tkinter as tk  # Python
+try:
+    # for Python2
+    import Tkinter as tk
+except ImportError:
+    # for python 3
+    import tkinter as tk
 
 import myNotebook as nb  # EDMC
 

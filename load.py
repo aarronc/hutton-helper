@@ -1,22 +1,30 @@
 "The Hutton Helper. For the Mug!"
 
+try:
+    # for Python2
+    import Tkinter as tk
+    import ttk
+    import tkFont
+    import tkMessageBox
+except ImportError:
+    # for python 3
+    import tkinter as tk
+    import tkinter.ttk as ttk
+    import tkinter.font as tkFont
+    import tkinter.messagebox as tkMessageBox
 
 import json
 import os
 import sys
 import textwrap
 import time
-import tkinter as tk
 import traceback
-import tkinter.ttk as ttk
 import zlib
-import tkinter.font as tkFont
 from canonnevents import whiteList
 
 from ttkHyperlinkLabel import HyperlinkLabel
 from config import config # applongname, appversion
 import myNotebook as nb
-import tkinter.messagebox
 
 import requests # still here for CG code
 
@@ -87,6 +95,30 @@ def plugin_start3(plugin_dir):
 
     return 'Hutton Helper'
 
+def plugin_start(plugin_dir):
+    "Initialise the Hutton Helper plugin."
+
+    this.helper = plugin_module.HuttonHelperHelper(config, _refresh, _status)
+    this.plugins = [
+        # A list of plugins to which we pass events.
+        updater.UpdatePlugin(this.helper),
+        forward.ForTheMugPlugin(this.helper),
+        local.CommandPlugin(this.helper),
+        shopping.ShoppingListPlugin(this.helper),
+        influence.InfluencePlugin(this.helper),
+        progress.ProgressPlugin(this.helper),
+        exploration.ExplorationPlugin(this.helper),
+        market.MarketPlugin(this.helper),
+        panic.PanicPlugin(this.helper),
+    ]
+
+    for plugin in plugins:
+        try:
+            plugin.plugin_start()
+        except:
+            PANIC("{}.plugin_start".format(plugin))
+
+    return 'Hutton Helper'
 
 def plugin_app(parent):
     "Called once to get the plugin widget. Return a ``tk.Frame``."

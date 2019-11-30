@@ -8,7 +8,7 @@ import traceback
 
 import requests
 
-XMIT_URL = 'http://forthemug.com:4567'
+XMIT_URL = 'http://forthemug.com:4570'
 DEFAULT_TIMEOUT = 7
 COMPRESSED_OCTET_STREAM = {'content-type': 'application/octet-stream', 'content-encoding': 'zlib'}
 

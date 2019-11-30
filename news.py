@@ -2,8 +2,13 @@
 """
 Module to provide the news.
 """
+try:
+    # for Python2
+    import Tkinter as tk
+except ImportError:
+    # for python 3
+    import tkinter as tk
 
-import Tkinter as tk
 from widgets import SelfWrappingHyperlinkLabel
 import xmit
 

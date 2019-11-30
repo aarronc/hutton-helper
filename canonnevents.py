@@ -2,9 +2,16 @@ import threading
 import requests
 import sys
 import json
-from tkinter import Frame
-import tkinter as tk
-from urllib.parse import quote_plus
+try:
+    # for Python2
+    from Tkinter import Frame
+    import Tkinter as tk
+    from urllib import quote_plus
+except ImportError:
+    # for python 3
+    import tkinter as tk
+    from urllib.parse import quote_plus
+    from tkinter import Frame
 
 
 class whiteListGetter(threading.Thread):

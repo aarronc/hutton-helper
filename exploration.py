@@ -1,11 +1,17 @@
 """
 Module to provide exploration credit tracking.
 """
+try:
+    # for Python2
+    import Tkinter as tk
+    import ttk
+except ImportError:
+    # for python 3
+    import tkinter as tk
+    import tkinter.ttk as ttk
 
 import json
 import sys
-import tkinter as tk
-import tkinter.ttk as ttk
 import zlib
 
 import plugin

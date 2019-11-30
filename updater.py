@@ -4,15 +4,23 @@ Update mechanism.
 
 from version import HH_VERSION
 
+try:
+    # for Python2
+    import Tkinter as tk
+    import urlparse
+    import ConfigParser
+except ImportError:
+    # for python 3
+    import tkinter as tk
+    import urllib.parse as urlparse
+    import configparser
 import collections
-import configparser
+
 import hashlib
 import json
 import os
 from io import StringIO
 import sys
-import tkinter as tk
-import urllib.parse as urlparse
 import zipfile
 
 import xmit
@@ -90,9 +98,9 @@ def get_version_info():
     if info is None:
         return None
 
-    version = info['version'].encode('ascii')
+    version = info['version']
     location = info['location']
-    digest = info['digest'].encode('ascii')
+    digest = info['digest']
 
     zipfile_url = urlparse.urljoin(HH_VERSION_URL, location)
 

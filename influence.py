@@ -1,12 +1,18 @@
 """
 You'd better stock up on land mines for that trip, Commander.
 """
+try:
+    # for Python2
+    import Tkinter as tk
+    import ttk
+except ImportError:
+    # for python 3
+    import tkinter as tk
+    import tkinter.ttk as ttk
 
 import json
 import sys
 import time
-import tkinter as tk
-import tkinter.ttk as ttk
 
 import plugin
 
