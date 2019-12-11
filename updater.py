@@ -9,17 +9,17 @@ try:
     import Tkinter as tk
     import urlparse
     import ConfigParser
+    import StringIO
 except ImportError:
     # for python 3
     import tkinter as tk
     import urllib.parse as urlparse
     import configparser
+    from io import StringIO
 import collections
-
 import hashlib
 import json
 import os
-from io import StringIO
 import sys
 import zipfile
 
