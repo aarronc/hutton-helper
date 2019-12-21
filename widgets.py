@@ -4,7 +4,7 @@ Various display widgets.
 
 import collections
 try:
-    # for Python2
+    # for python 2
     import Tkinter as tk
     import ttk
     import tkFont
@@ -16,7 +16,7 @@ except ImportError:
 
 from ttkHyperlinkLabel import HyperlinkLabel
 
-DONT_PANIC = "---------"
+DONT_PANIC = "-" # Original DON'T PANIC
 TK_DEFAULT_FONT = 'TkDefaultFont'
 
 

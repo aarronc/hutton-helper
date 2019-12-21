@@ -2,7 +2,7 @@
 Module to provide exploration credit tracking.
 """
 try:
-    # for Python2
+    # for python 2
     import Tkinter as tk
     import ttk
 except ImportError:

@@ -7,16 +7,16 @@ Each is almost an EDMC plugin in its own right.
 import json
 import sys
 try:
-    # for Python2
+    # for python 2
     import UserDict
-    is2 = True
+    is2 = True # used to check if is python2
 except ImportError:
     # for python 3
     from collections import UserDict
     from collections import MutableMapping as DictMixin
     from collections import MutableMapping
     import collections
-    is2 = False
+    is2 = False # used to check if is python2
 
 
 def add_config_prefix(key):
