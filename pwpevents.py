@@ -106,7 +106,7 @@ class PwpEventsPlugin(plugin.HuttonHelperPlugin):
     def journal_entry(self, cmdr, _is_beta, _system, _station, entry, _state):
         "Act like a tiny EDMC plugin."
 
-        if entry['event'] == 'FSDJump':
+        if entry['event'] == 'FSDJump' or entry['event'] == 'Undocked':
             self.__check_again()
 
         if self.__reset(cmdr=cmdr) or not self.ready:
