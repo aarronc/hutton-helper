@@ -1,22 +1,30 @@
 "The Hutton Helper. For the Mug!"
 
+try:
+    # for Python2
+    import Tkinter as tk
+    import ttk
+    import tkFont
+    import tkMessageBox
+except ImportError:
+    # for python 3
+    import tkinter as tk
+    import tkinter.ttk as ttk
+    import tkinter.font as tkFont
+    import tkinter.messagebox as tkMessageBox
 
 import json
 import os
 import sys
 import textwrap
 import time
-import Tkinter as tk
 import traceback
-import ttk
 import zlib
-import tkFont
 from canonnevents import whiteList
 
 from ttkHyperlinkLabel import HyperlinkLabel
 from config import config # applongname, appversion
 import myNotebook as nb
-import tkMessageBox
 
 import requests # still here for CG code
 
@@ -33,6 +41,7 @@ try:
     import influence
     import local
     import news
+    import pwpevents
     import plugin as plugin_module
     import progress
     import shopping
@@ -62,7 +71,15 @@ def PANIC(description=None):
     traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stderr)
 
 
-def plugin_start():
+def plugin_start3(plugin_dir):
+    ""
+    "Initialise the Hutton Helper plugin."
+
+    plugin_start(plugin_dir)
+
+    return 'Hutton Helper'
+
+def plugin_start(plugin_dir):
     "Initialise the Hutton Helper plugin."
 
     this.helper = plugin_module.HuttonHelperHelper(config, _refresh, _status)
@@ -76,6 +93,7 @@ def plugin_start():
         progress.ProgressPlugin(this.helper),
         exploration.ExplorationPlugin(this.helper),
         market.MarketPlugin(this.helper),
+        pwpevents.PwpEventsPlugin(this.helper),
         panic.PanicPlugin(this.helper),
     ]
 
@@ -86,7 +104,6 @@ def plugin_start():
             PANIC("{}.plugin_start".format(plugin))
 
     return 'Hutton Helper'
-
 
 def plugin_app(parent):
     "Called once to get the plugin widget. Return a ``tk.Frame``."
@@ -314,6 +331,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
     entry['huttonappversion'] = HH_VERSION
 
     compress_json = json.dumps(entry)
+    compress_json = compress_json.encode('utf-8')
     transmit_json = zlib.compress(compress_json)
 
     event = entry['event']
@@ -383,7 +401,8 @@ def cmdr_data(data, is_beta):
     "Called shortly after startup with a dump of information from Frontier."
 
     if not is_beta:
-        transmit_json = zlib.compress(json.dumps(data))
+        compress_json = json.dumps(data)
+        transmit_json = zlib.compress(compress_json.encode('utf-8'))
         xmit.post('/docked', parse=False, data=transmit_json, headers=xmit.COMPRESSED_OCTET_STREAM)
 
     for plugin in this.plugins:
@@ -396,7 +415,7 @@ def cmdr_data(data, is_beta):
 def plugin_stop():
     "Called once at shutdown."
 
-    print "Farewell cruel world!"
+    print("Farewell cruel world!")
     for plugin in this.plugins:
         try:
             plugin.plugin_stop()

@@ -1,12 +1,17 @@
 """
 Track the trucker's progress.
 """
+try:
+    # for Python2
+    import Tkinter as tk
+except ImportError:
+    # for python 3
+    import tkinter as tk
 
 import collections
 import datetime
 import math
 import time
-import Tkinter as tk
 
 import plugin
 import xmit

@@ -2,12 +2,20 @@
 You'd better stock up on land mines for that trip, Commander.
 """
 
+try:
+    # for Python2
+    import Tkinter as tk
+    import ttk
+    import tkFont
+except ImportError:
+    # for python 3
+    import tkinter as tk
+    import tkinter.ttk as ttk
+    import tkinter.font as tkFont
+
 import json
 import sys
 import time
-import tkFont
-import Tkinter as tk
-import ttk
 
 import plugin
 
@@ -206,7 +214,7 @@ class ShoppingListPlugin(plugin.HuttonHelperPlugin):
             # This line below is why this method is easier to copy and paste into
             # each plugin than to make generic enough to pull to the base class:
             entry = entries.pop(0)
-            print '=== replay', entry
+            print('=== replay', entry)
             self.journal_entry(None, False, None, None, entry, None)
             self.table_frame.after(500, self.__replay, entries)
 

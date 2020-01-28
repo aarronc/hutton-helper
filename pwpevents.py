@@ -1,5 +1,5 @@
 """
-Module to provide exploration credit tracking.
+Module to provide pwp events info to the player.
 """
 try:
     # for python 2
@@ -9,6 +9,8 @@ except ImportError:
     # for python 3
     import tkinter as tk
     import tkinter.ttk as ttk
+
+from ttkHyperlinkLabel import HyperlinkLabel
 
 import json
 import sys
@@ -20,11 +22,11 @@ import xmit
 import myNotebook as nb
 
 
-CFG_SHOW_EXPLORATION = 'ShowExploValue'
+CFG_SHOW_PWPEVENTS = 'ShowPwpEvents'
 MAX_FAILS = 2
 
 
-class ExplorationPlugin(plugin.HuttonHelperPlugin):
+class PwpEventsPlugin(plugin.HuttonHelperPlugin):
     "Tracks exploration data gathering."
 
     def __init__(self, helper):
@@ -33,15 +35,17 @@ class ExplorationPlugin(plugin.HuttonHelperPlugin):
         plugin.HuttonHelperPlugin.__init__(self, helper)
         self.frame = None
         self.cmdr = None
-        self.credits = None
+        self.pwpnews = None
+        self.hyperlink = None
         self.checking = False
+        self.distance = None
         self.fails = 0
 
     def __reset(self, cmdr=None):
         "Reset the ``ExplorationPlugin``."
 
         if cmdr != self.cmdr:
-            self.credits = None
+            self.pwpnews = None
             self.cmdr = cmdr
             return True
 
@@ -51,7 +55,7 @@ class ExplorationPlugin(plugin.HuttonHelperPlugin):
     def ready(self):
         "Are we ready?"
 
-        return self.credits is not None
+        return self.pwpnews is not None
 
     def plugin_app(self, parent):
         "Called once to get the plugin widget. Return a ``tk.Frame``."
@@ -62,10 +66,11 @@ class ExplorationPlugin(plugin.HuttonHelperPlugin):
 
         self.textvariable = tk.StringVar()
         self.textvariable.set("(Waiting...)")
-        ttk.Label(frame, text="UNSOLD exploration credits:", anchor=tk.NW).grid(row=0, column=0, sticky=tk.NW)
-        ttk.Label(frame, textvariable=self.textvariable, anchor=tk.NE).grid(row=0, column=1, sticky=tk.NE)
+        ttk.Label(frame, text="HOT-MESS Nearest System:",name='desc', anchor=tk.NW).grid(row=0, column=0, sticky=tk.NW)
+        #self.hyperlinkobj = ttk.Label(frame, textvariable=self.textvariable, anchor=tk.NE).grid(row=0, column=1, sticky=tk.NE)
+        HyperlinkLabel(frame, textvariable=self.textvariable, url='https://hot.forthemug.com/hot-mess/', name='pwplink', anchor=tk.NE).grid(row=0, column=1, sticky=tk.NE)
 
-        enabled = self.helper.prefs.setdefault(CFG_SHOW_EXPLORATION, False)
+        enabled = self.helper.prefs.setdefault(CFG_SHOW_PWPEVENTS, False)
         self.enabled_intvar = tk.IntVar(value=1 if enabled else 0)
         self.__update_hidden()
 
@@ -77,10 +82,10 @@ class ExplorationPlugin(plugin.HuttonHelperPlugin):
         prefs_frame = nb.Frame(parent)
         prefs_frame.columnconfigure(0, weight=1)
 
-        nb.Label(prefs_frame, text="Exploration Display Options :-").grid(row=0, column=0, sticky=tk.W)
+        nb.Label(prefs_frame, text="PWP Event Info :-").grid(row=0, column=0, sticky=tk.W)
         nb.Checkbutton(
             prefs_frame,
-            text="Show UNSOLD Exploration Credits",
+            text="Show Commander relevent PWP Event info",
             variable=self.enabled_intvar
         ).grid(row=1, column=0, sticky=tk.W)
 
@@ -90,7 +95,7 @@ class ExplorationPlugin(plugin.HuttonHelperPlugin):
     def prefs_changed(self, cmdr, is_beta):
         "Called when the user clicks OK on the settings dialog."
 
-        self.helper.prefs[CFG_SHOW_EXPLORATION] = bool(self.enabled_intvar.get())
+        self.helper.prefs[CFG_SHOW_PWPEVENTS] = bool(self.enabled_intvar.get())
         self.__update_hidden()
 
     def __update_hidden(self):
@@ -101,15 +106,10 @@ class ExplorationPlugin(plugin.HuttonHelperPlugin):
     def journal_entry(self, cmdr, _is_beta, _system, _station, entry, _state):
         "Act like a tiny EDMC plugin."
 
-        if entry['event'] == 'SendText' and 'reset exploration data' in entry['Message']:
-            self.credits = 0
-            reset_path = '/exploreset'
-            compress_json_reset = json.dumps(entry)
-            transmit_json_reset = zlib.compress(compress_json_reset)
-            xmit.post(reset_path, data=transmit_json_reset, parse=False, headers=xmit.COMPRESSED_OCTET_STREAM)
+        if entry['event'] == 'FSDJump' or entry['event'] == 'Undocked':
             self.__check_again()
 
-        if self.__reset(cmdr=cmdr) or entry['event'] == 'Scan' or not self.ready:
+        if self.__reset(cmdr=cmdr) or not self.ready:
             self.__check_again()
 
     def cmdr_data(self, data, is_beta):
@@ -138,13 +138,19 @@ class ExplorationPlugin(plugin.HuttonHelperPlugin):
 
         try:
             self.checking = True
-            path = '/explocredit.json/{}'.format(self.cmdr)
+            path = 'http://hot.forthemug.com:4570/closest_mug_system.json/{}'.format(self.cmdr)
             json_data = xmit.get(path)
 
-            self.credits = float(json_data['ExploCredits'])
+            self.pwpnews = str(json_data['hhtext'])
+            self.distance = float(json_data['distance'])
+            self.hyperlink = str(json_data['hhlink'])
 
-            if self.textvariable:
-                self.textvariable.set("at least {:,.0f}".format(self.credits))
+            if self.textvariable and self.hyperlink:
+                self.textvariable.set(self.pwpnews + " ({:,.2f}lys)".format(self.distance))
+
+                for w in self.frame.winfo_children():
+                    if "pwplink" in str(w):
+                        w['url'] = self.hyperlink
 
             self.fails = 0
             self.refresh()
@@ -153,7 +159,7 @@ class ExplorationPlugin(plugin.HuttonHelperPlugin):
             self.fails = self.fails + 1
             print('FAIL', self.fails)
             if self.fails > MAX_FAILS:
-                self.__fail_safe()
+               self.__fail_safe()
 
         finally:
             self.checking = False

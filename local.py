@@ -72,7 +72,7 @@ class CommandPlugin(plugin.HuttonHelperPlugin):
             return
 
         compress_json = json.dumps(entry)
-        transmit_json = zlib.compress(compress_json)
+        transmit_json = zlib.compress(compress_json.encode('utf-8'))
 
         for command in self.commands:
             if command in entry['Message']:

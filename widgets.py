@@ -3,13 +3,20 @@ Various display widgets.
 """
 
 import collections
-import tkFont
-import Tkinter as tk
-import ttk
+try:
+    # for python 2
+    import Tkinter as tk
+    import ttk
+    import tkFont
+except ImportError:
+    # for python 3
+    import tkinter as tk
+    import tkinter.ttk as ttk
+    import tkinter.font as tkFont
 
 from ttkHyperlinkLabel import HyperlinkLabel
 
-DONT_PANIC = "DON'T PANIC!"
+DONT_PANIC = "DON'T PANIC!" # Original DON'T PANIC
 TK_DEFAULT_FONT = 'TkDefaultFont'
 
 

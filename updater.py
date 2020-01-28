@@ -4,15 +4,23 @@ Update mechanism.
 
 from version import HH_VERSION
 
+try:
+    # for Python2
+    import Tkinter as tk
+    import urlparse
+    import ConfigParser
+    import StringIO
+except ImportError:
+    # for python 3
+    import tkinter as tk
+    import urllib.parse as urlparse
+    import configparser
+    from io import StringIO
 import collections
-import ConfigParser
 import hashlib
 import json
 import os
-import StringIO
 import sys
-import Tkinter as tk
-import urlparse
 import zipfile
 
 import xmit
@@ -31,7 +39,7 @@ HH_PLUGIN_DIRECTORY = os.path.dirname(os.path.realpath(__file__))
 HH_CONFIG_FILE = os.path.join(HH_PLUGIN_DIRECTORY, 'hutton.ini')
 
 if os.path.exists(HH_CONFIG_FILE):
-    HH_CONFIG = ConfigParser.SafeConfigParser()
+    HH_CONFIG = configparser.SafeConfigParser()
     HH_CONFIG.read(HH_CONFIG_FILE)
     if HH_CONFIG.has_option('updates', 'version_url'):
         HH_VERSION_URL = HH_CONFIG.get('updates', 'version_url')
@@ -90,9 +98,9 @@ def get_version_info():
     if info is None:
         return None
 
-    version = info['version'].encode('ascii')
-    location = info['location'].encode('ascii')
-    digest = info['digest'].encode('ascii')
+    version = info['version']
+    location = info['location']
+    digest = info['digest']
 
     zipfile_url = urlparse.urljoin(HH_VERSION_URL, location)
 

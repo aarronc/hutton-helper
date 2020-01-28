@@ -4,10 +4,17 @@ Code to pack updates into ZIP files.
 
 from version import HH_VERSION
 
+try:
+    # for Python2
+    import StringIO
+    is2 = True
+except ImportError:
+    # for python 3
+    from io import BytesIO
+    is2 = False
 import hashlib
 import json
 import os
-import StringIO
 import sys
 import zipfile
 
@@ -22,7 +29,10 @@ INCLUDE_EXTENSIONS = set([
 def build_distro_string(here=HH_PLUGIN_DIRECTORY):
     "Build the distribution in memory."
 
-    f = StringIO.StringIO()
+    if is2:
+        f = StringIO.StringIO()
+    else:
+        f = BytesIO()
 
     with zipfile.ZipFile(f, 'w') as z:
         m = hashlib.sha256()
@@ -54,7 +64,10 @@ def read_distro_string(s, digest=None):
     """
 
     assert isinstance(s, str)
-    f = StringIO.StringIO(s)
+    if is2:
+        f = StringIO.StringIO(s)
+    else:
+        f = BytesIO(s)
 
     z = zipfile.ZipFile(f, 'r')
     m = hashlib.sha256()

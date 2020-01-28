@@ -2,10 +2,16 @@
 Module to provide the main toolbar.
 """
 
-import Tkinter as tk
-import webbrowser
+try:
+    # for Python2
+    import Tkinter as tk
+    import tkMessageBox
+except ImportError:
+    # for python 3
+    import tkinter as tk
+    import tkinter.messagebox as tkMessageBox
 
-import tkMessageBox
+import webbrowser
 
 import xmit
 

@@ -82,7 +82,7 @@ class ForTheMugPlugin(plugin.HuttonHelperPlugin):
         event_path = self.event_paths.get(event)
 
         compress_json = json.dumps(entry)
-        transmit_json = zlib.compress(compress_json)
+        transmit_json = zlib.compress(compress_json.encode('utf-8'))
 
         if event_path:
             xmit.post(event_path, data=transmit_json, parse=False, headers=xmit.COMPRESSED_OCTET_STREAM)
