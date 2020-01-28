@@ -16,7 +16,7 @@ except ImportError:
 
 from ttkHyperlinkLabel import HyperlinkLabel
 
-DONT_PANIC = "-" # Original DON'T PANIC
+DONT_PANIC = "DON'T PANIC!" # Original DON'T PANIC
 TK_DEFAULT_FONT = 'TkDefaultFont'
 
 

@@ -28,7 +28,7 @@ FACTIONS = set([
 
 
 class InfluencePlugin(plugin.HuttonHelperPlugin):
-    "Tracks mission shopping lists."
+    "Shows Influence of Hutton Systems"
 
     def __init__(self, helper):
         "Initialise the ``InfluencePlugin``."
