@@ -41,7 +41,7 @@ try:
     import influence
     import local
     import news
-    import pwpevents
+    # import pwpevents
     import plugin as plugin_module
     import progress
     import shopping
@@ -93,7 +93,7 @@ def plugin_start(plugin_dir):
         progress.ProgressPlugin(this.helper),
         exploration.ExplorationPlugin(this.helper),
         market.MarketPlugin(this.helper),
-        pwpevents.PwpEventsPlugin(this.helper),
+        # pwpevents.PwpEventsPlugin(this.helper),
         panic.PanicPlugin(this.helper),
     ]
 
