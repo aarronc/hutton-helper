@@ -56,6 +56,7 @@ class CommandPlugin(plugin.HuttonHelperPlugin):
         'race start': "Sent Race START info",
         'race end': "Sent Race END info",
         'recheck system': "Forced System Re-check of {system} on next jump in",
+        'recruit': 'Sent request for squadron review',
         'reset exploration data': "Reset your Exploration 2.0 Data",
         'TLDR': "Sent TLDR update Command",
     }
