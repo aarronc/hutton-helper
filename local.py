@@ -15,48 +15,49 @@ class CommandPlugin(plugin.HuttonHelperPlugin):
     "Sends commands to the server."
 
     xmit_paths = {
-        'mission close': '/missionreset',
-        'tick update': '/tickupdate',
-        'TLDR': '/tldr',
-        'COLBRIEF': '/tldrcol',
-        'stateupdate': '/state',
-        'recheck system': '/recheckinfluence',
-        'generalupdate': '/dailygeneral',
-        'coloniaupdate': '/colstate',
-        'race start': '/racestart',
-        'race end': '/raceend',
-        'exploration start': '/explostart',
-        'reset exploration data': '/exploreset',  # vaguely safe for testing
-        'inf reload': '/devinfreload',
+        'are we there yet': '/huttontimer.json/{cmdr}', # Calls a commanders current Hutton Run Time
         'allow list reload': '/devallowreload',
+        'auth list reload': '/authlistreload',
+        'best hutton run': '/besthuttonrun.json/{cmdr}',  # safe for testing
         'black ops add': '/blopsadd',
         'black ops active': '/silentrunning',
         'black ops reset': '/normalrunning',
-        'auth list reload': '/authlistreload',
+        'COLBRIEF': '/tldrcol',
+        'coloniaupdate': '/colstate',
+        'exploration start': '/explostart',
         'explo system': '/explosystem.json/{cmdr}/{system}',
-        'best hutton run': '/besthuttonrun.json/{cmdr}',  # safe for testing
-        'are we there yet': '/huttontimer.json/{cmdr}', # Calls a commanders current Hutton Run Time
+        'generalupdate': '/dailygeneral',
+        'inf reload': '/devinfreload',
+        'mission close': '/missionreset',
         'mugify' : '/verify',
-        'Mugify' : '/verify'
+        'Mugify' : '/verify',
+        'race start': '/racestart',
+        'race end': '/raceend',
+        'recheck system': '/recheckinfluence',
+        'recruit': '/squadronrecruit',
+        'reset exploration data': '/exploreset',  # vaguely safe for testing
+        'stateupdate': '/state',
+        'tick update': '/tickupdate',
+        'TLDR': '/tldr'
     }
 
     status_formats = {
         # OPTIONAL unless there's no matching xmit_paths entry above
-        'TLDR': "Sent TLDR update Command",
-        'COLBRIEF': "Sent TLDR update Colonia Command",
-        'recheck system': "Forced System Re-check of {system} on next jump in",
-        'race start': "Sent Race START info",
-        'race end': "Sent Race END info",
-        'reset exploration data': "Reset your Exploration 2.0 Data",
-        'inf reload': "Developer Mode : inf reload command sent",
         'allow list reload': "Developer Mode : allow list reload command sent",
+        'are we there yet': '{info}',
+        'auth list reload': "Admin Mode : Reloaded Auth List",
+        'best hutton run': "BEST Hutton Run is CMDR {commandername} in {TravelTime}",
         'black ops add': "Admin Mode : Black Ops Faction Added",
         'black ops active': "Black ops Mode : Enjoy Being Naughty Commander",
         'black ops reset': "Black ops Mode : Welcome back Commander",
-        'auth list reload': "Admin Mode : Reloaded Auth List",
+        'COLBRIEF': "Sent TLDR update Colonia Command",
         'explo system': "You Have sold {ExplorationSystemTotal:,.0f} credits in {system} today",
-        'best hutton run': "BEST Hutton Run is CMDR {commandername} in {TravelTime}",
-        'are we there yet': '{info}'
+        'inf reload': "Developer Mode : inf reload command sent",
+        'race start': "Sent Race START info",
+        'race end': "Sent Race END info",
+        'recheck system': "Forced System Re-check of {system} on next jump in",
+        'reset exploration data': "Reset your Exploration 2.0 Data",
+        'TLDR': "Sent TLDR update Command",
     }
 
     def __init__(self, helper):
