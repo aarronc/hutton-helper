@@ -12,6 +12,16 @@ import xmit
 
 ADDITIONAL_PATHS_URL = 'http://hot.forthemug.com/event_paths.json'
 
+def merge_dicts(*dict_args):
+    """
+    Given any number of dicts, shallow copy and merge into a new dict,
+    precedence goes to key value pairs in latter dicts.
+    """
+    result = {}
+    for dictionary in dict_args:
+        result.update(dictionary)
+    return result
+
 class ForTheMugPlugin(plugin.HuttonHelperPlugin):
     "Forwards data to the Hutton Helper Server."
 
@@ -67,13 +77,13 @@ class ForTheMugPlugin(plugin.HuttonHelperPlugin):
     "Undocked": "/undockedinfoupdate",
     "USSDrop" : "/ussdrop"
     }
-    
+
     def plugin_start(self):
         "Called once at startup. Try to keep it short..."
         extra_paths = xmit.get(ADDITIONAL_PATHS_URL)
 
         if extra_paths is not None:
-            self.event_paths = extra_paths
+            self.event_paths = merge_dicts(self.event_paths, extra_paths)
 
 
 

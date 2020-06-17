@@ -23,7 +23,7 @@ import zlib
 from canonnevents import whiteList
 
 from ttkHyperlinkLabel import HyperlinkLabel
-from config import config # applongname, appversion
+from config import config, applongname, appversion
 import myNotebook as nb
 
 import requests # still here for CG code
@@ -329,6 +329,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
     entry['hhstationname'] = station
     entry['hhsystemname'] = system
     entry['huttonappversion'] = HH_VERSION
+    entry['edmcversion'] = appversion
 
     compress_json = json.dumps(entry)
     compress_json = compress_json.encode('utf-8')
