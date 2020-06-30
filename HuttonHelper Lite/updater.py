@@ -202,7 +202,7 @@ class UpdatePlugin(plugin.HuttonHelperPlugin):
             url='https://hot.forthemug.com/',
             underline=True
         ).grid(row=0, column=0)
-        nb.Label(topline, text="version {}".format(HH_VERSION)).grid(row=0, column=1)
+        nb.Label(topline, text="Lite version {}".format(HH_VERSION)).grid(row=0, column=1)
         self.automatic_intvar = tk.IntVar(value=self.cfg_auto)
         nb.Checkbutton(frame, text="Update automatically", variable=self.automatic_intvar).grid(row=1, sticky=tk.W)
 
