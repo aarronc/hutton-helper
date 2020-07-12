@@ -307,7 +307,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
     transmit_json = zlib.compress(compress_json)
 
     event = entry['event']
-    sys.stderr.write('event: {}\r\n'.format(event))
+    #sys.stderr.write('event: {}\r\n'.format(event)) #Very Chatty
 
     # Declare a function to make it easy to send the event to the server and get the response.
     # We've smuggled the transmit_json variable from journal_entry into xmit_event using a

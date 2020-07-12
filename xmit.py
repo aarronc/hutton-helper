@@ -45,7 +45,6 @@ def request(path_or_url, base=XMIT_URL, method='get', parse=True, **kwargs):
         FAILED = False
         response = getattr(requests, method)(url, timeout=DEFAULT_TIMEOUT, **kwargs)
         delay = (time.time() - began) * 1000
-        sys.stderr.write("{} {} {} ms={:.0f}\r\n".format(response.status_code, method.upper(), url, delay))
 
         if response.status_code == 200:
             if parse:
@@ -64,6 +63,7 @@ def request(path_or_url, base=XMIT_URL, method='get', parse=True, **kwargs):
             return ''
 
         FAILED = True
+        sys.stderr.write("{} {} {} ms={:.0f}\r\n".format(response.status_code, method.upper(), url, delay))
         sys.stderr.write(repr(response.content))
         sys.stderr.write('\r\n')
 
