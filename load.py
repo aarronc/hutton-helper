@@ -50,6 +50,7 @@ try:
     import widgets
     import xmit
     import market
+    import cargo
     import panic
 
     from version import HH_VERSION

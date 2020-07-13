@@ -21,17 +21,15 @@ class CargoPlugin(plugin.HuttonHelperPlugin):
     def journal_entry(self, cmdr, is_beta, system, station, entry, state):
         "Called when Elite Dangerous writes to the commander's journal."
 
-        # if entry['event'] == 'MarketBuy' or entry['event'] == 'MarketSell' or entry['event'] == 'MissionCompleted' :  # requires specific events
         if entry['event'] == 'Cargo':
-            # time.sleep(2.5)
             dump_path = data.get_journal_path('Cargo.json')
-            # sys.stderr.write("Reading market data from: {}\r\n".format(dump_path))
+            # sys.stderr.write("Reading cargo data from: {}\r\n".format(dump_path))
             with open(dump_path, 'r') as dump:
                 dump = dump.read()
                 dump = json.loads(dump)
                 dump['commandername'] = cmdr
-                dump = json.dumps(dump)
-                cargo_data = zlib.compress(dump)
+                compress_json = json.dumps(dump)
+                cargo_data = zlib.compress(compress_json.encode('utf-8'))
                 # sys.stderr.write("Posting it...\r\n")
                 xmit.post('/missioncargo', cargo_data, headers=xmit.COMPRESSED_OCTET_STREAM)
                 # self.helper.status("Market data posted.")
