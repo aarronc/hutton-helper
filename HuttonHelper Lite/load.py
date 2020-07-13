@@ -44,6 +44,8 @@ try:
     import updater
     import widgets
     import xmit
+    import market
+    import cargo
 
     from version import HH_VERSION
 
@@ -81,6 +83,8 @@ def plugin_start(plugin_dir):
         updater.UpdatePlugin(this.helper),
         forward.ForTheMugPlugin(this.helper),
         local.CommandPlugin(this.helper),
+        market.MarketPlugin(this.helper),
+        cargo.CargoPlugin(this.helper),
         # pwpevents.PwpEventsPlugin(this.helper),
     ]
 

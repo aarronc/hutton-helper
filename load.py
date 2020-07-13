@@ -93,6 +93,7 @@ def plugin_start(plugin_dir):
         progress.ProgressPlugin(this.helper),
         exploration.ExplorationPlugin(this.helper),
         market.MarketPlugin(this.helper),
+        cargo.CargoPlugin(this.helper),
         # pwpevents.PwpEventsPlugin(this.helper),
         panic.PanicPlugin(this.helper),
     ]
