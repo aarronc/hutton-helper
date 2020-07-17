@@ -14,6 +14,7 @@ except ImportError:
     import tkinter.font as tkFont
 
 import json
+import data
 import sys
 import time
 
@@ -230,9 +231,14 @@ class ShoppingListPlugin(plugin.HuttonHelperPlugin):
         "Handle ``Cargo``."
 
         self.cargo = {}
+        cargo_path = data.get_journal_path('Cargo.json')
+        # sys.stderr.write("Reading cargo data from: {}\r\n".format(dump_path))
+        with open(cargo_path, 'r') as infile:
+            cargodump = infile.read()
+            cargodump = json.loads(cargodump)
 
         # TODO this is by the lowercase version FFS
-        for item in entry['Inventory']:
+        for item in cargodump['Inventory']:
             commodity, _desc = extract_commodity(item)
             count = item['Count']
             self.cargo[commodity] = count
@@ -243,6 +249,8 @@ class ShoppingListPlugin(plugin.HuttonHelperPlugin):
         for mission in self.missions:
             if mission['mission_id'] == entry['MissionID']:
                 mission['remaining'] = entry['TotalItemsToDeliver'] - entry['ItemsDelivered']
+
+        self.event_cargo(entry)
 
         if 'Count' in entry and 'CargoType' in entry:
             # absent if a wing member dropped something off
