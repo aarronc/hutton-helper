@@ -77,7 +77,7 @@ def PANIC(description=None):
     errorreport['traceback'] = traceback.format_exception(exc_type, exc_value, exc_traceback)
     compress_json = json.dumps(errorreport)
     error_data = zlib.compress(compress_json.encode('utf-8'))
-    sys.stderr.write("Posting it...{}\r\n".format(compress_json))
+    sys.stderr.write("Posting it...{}\r\n".format(compress_json.encode('utf-8')))
     xmit.post('/errorreport', error_data, headers=xmit.COMPRESSED_OCTET_STREAM)
 
 def plugin_start3(plugin_dir):
