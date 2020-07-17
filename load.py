@@ -71,6 +71,14 @@ def PANIC(description=None):
     exc_type, exc_value, exc_traceback = sys.exc_info()
     traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stderr)
 
+    errorreport = {}
+    errorreport['cmdr'] = news.commander
+    errorreport['modulecall'] = description or ''
+    errorreport['traceback'] = traceback.format_exception(exc_type, exc_value, exc_traceback)
+    compress_json = json.dumps(errorreport)
+    error_data = zlib.compress(compress_json.encode('utf-8'))
+    sys.stderr.write("Posting it...{}\r\n".format(compress_json))
+    xmit.post('/errorreport', error_data, headers=xmit.COMPRESSED_OCTET_STREAM)
 
 def plugin_start3(plugin_dir):
     ""
@@ -338,7 +346,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
     transmit_json = zlib.compress(compress_json)
 
     event = entry['event']
-    #sys.stderr.write('event: {}\r\n'.format(event)) #Very Chatty
+    sys.stderr.write('event: {}\r\n'.format(event)) #Very Chatty
 
     # Declare a function to make it easy to send the event to the server and get the response.
     # We've smuggled the transmit_json variable from journal_entry into xmit_event using a
