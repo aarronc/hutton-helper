@@ -73,11 +73,13 @@ def PANIC(description=None):
 
     errorreport = {}
     errorreport['cmdr'] = news.commander
+    errorreport['huttonappversion'] = HH_VERSION
+    errorreport['edmcversion'] = appversion
     errorreport['modulecall'] = description or ''
     errorreport['traceback'] = traceback.format_exception(exc_type, exc_value, exc_traceback)
     compress_json = json.dumps(errorreport)
     error_data = zlib.compress(compress_json.encode('utf-8'))
-    sys.stderr.write("Posting it...{}\r\n".format(compress_json.encode('utf-8')))
+    #sys.stderr.write("Posting it...{}\r\n".format(compress_json.encode('utf-8')))
     xmit.post('/errorreport', error_data, headers=xmit.COMPRESSED_OCTET_STREAM)
 
 def plugin_start3(plugin_dir):
@@ -276,7 +278,7 @@ def prefs_changed(cmdr, is_beta):
 EVENT_STATUS_FORMATS = {
     'ApproachBody': "Approached {Body}",
     'ApproachSettlement': "Approached {Name}",
-    'CargoDepot': "Wing Mission Info updated",
+    'CargoDepot': "Delivery Mission Info updated",
     'CollectCargo': "Cargo scooped into cargo bay",
     'CommunityGoal': "Community Goal Data Received",
     'Died': "Oops.... you died :( :( :(",
@@ -406,6 +408,9 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
         bonusval = entry['Bonus']
         totalvalue = entry['TotalEarnings']
         this.status['text'] = "Sold ExplorationData for {:,.0f} credits".format(float(totalvalue))
+
+    elif event == 'Cargo':
+        shopping.cargodump = cargo.cargodump
 
 
 def cmdr_data(data, is_beta):
