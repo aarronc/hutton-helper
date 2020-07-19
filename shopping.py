@@ -223,11 +223,21 @@ class ShoppingListPlugin(plugin.HuttonHelperPlugin):
 
     def journal_entry(self, cmdr, _is_beta, _system, _station, entry, _state):
         "Act like a tiny EDMC plugin."
-        self._cargo_update()
         method = 'event_{}'.format(entry['event'].lower())
         if hasattr(self, method):
             getattr(self, method)(entry)
             self.refresh()
+
+    def event_cargo(self, entry):
+        "Updates cargo"
+        self.cargo = {}
+
+        # TODO this is by the lowercase version FFS
+        if cargodump:
+            for item in cargodump['Inventory']:
+                commodity, _desc = extract_commodity(item)
+                count = item['Count']
+                self.cargo[commodity] = count
 
     def event_cargodepot(self, entry):
         "Handle ``CargoDepot``."
@@ -236,8 +246,18 @@ class ShoppingListPlugin(plugin.HuttonHelperPlugin):
             if mission['mission_id'] == entry['MissionID']:
                 mission['remaining'] = entry['TotalItemsToDeliver'] - entry['ItemsDelivered']
 
+        if 'Count' in entry and 'CargoType' in entry:
+            # absent if a wing member dropped something off
+            if entry['UpdateType'] == 'Deliver':
+                commodity, _desc = extract_commodity(entry)
+                count = entry['Count']
+                self.cargo[commodity] -= count
+
     def event_ejectcargo(self, entry):
         "Handle ``EjectCargo``."
+
+        commodity, _desc = extract_commodity(entry)
+        self.__remove_cargo(commodity, entry['Count'])
 
     def event_died(self, entry):
         "Handle ``Died``."
@@ -247,14 +267,26 @@ class ShoppingListPlugin(plugin.HuttonHelperPlugin):
     def event_collectcargo(self, entry):
         "Handle ``CollectCargo``."
 
+        commodity, _desc = extract_commodity(entry)
+        self.__add_cargo(commodity, 1)
+
     def event_marketbuy(self, entry):
         "Handle ``MarketBuy``."
+
+        commodity, _desc = extract_commodity(entry)
+        self.__add_cargo(commodity, entry['Count'])
 
     def event_marketsell(self, entry):
         "Handle ``MarketSell``."
 
+        commodity, _desc = extract_commodity(entry)
+        self.__remove_cargo(commodity, entry['Count'])
+
     def event_miningrefined(self, entry):
         "Handle ``MiningRefined``."
+
+        commodity, _desc = extract_commodity(entry)
+        self.__add_cargo(commodity, 1)
 
     def event_missionaccepted(self, entry):
         "Handle ``MissionAccepted``."
@@ -296,21 +328,22 @@ class ShoppingListPlugin(plugin.HuttonHelperPlugin):
 
         known = set(mission['mission_id'] for mission in self.missions)
         active = set(mission['MissionID'] for mission in entry['Active'])
-
+        # This only seems to remove missing missions can it not populate the self.missions - future work
         for mission_id in known - active:
             self.__remove_mission(mission_id)
 
-    def _cargo_update(self):
-        "Updates cargo"
-        self.cargo = {}
+    def __add_cargo(self, commodity, count):
+        "Remove some cargo."
 
-        # TODO this is by the lowercase version FFS
-        if cargodump:
-            sys.stderr.write('Shopping: Cargo Update -- {}\r\n'.format(event,cargodump))
-            for item in cargodump['Inventory']:
-                commodity, _desc = extract_commodity(item)
-                count = item['Count']
-                self.cargo[commodity] = count
+        self.cargo[commodity] = self.cargo.get(commodity, 0) + count
+
+    def __remove_cargo(self, commodity, count):
+        "Remove some cargo."
+
+        count = self.cargo.get(commodity, 0) - count
+        if count < 0:
+            count = 0
+        self.cargo[commodity] = count
 
     def __remove_mission(self, mission_id):
         "Remove a mission."

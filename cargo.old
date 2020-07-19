@@ -19,9 +19,6 @@ class CargoPlugin(plugin.HuttonHelperPlugin):
     hidden = True  # invisible
     ready = True  # always
 
-    def __init__(self, helper):
-        "Initialise the ``CargoPlugin``."
-
     def journal_entry(self, cmdr, is_beta, system, station, entry, state):
         "Called when Elite Dangerous writes to the commander's journal."
 
