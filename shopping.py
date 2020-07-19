@@ -14,6 +14,7 @@ except ImportError:
     import tkinter.font as tkFont
 
 import json
+import data
 import sys
 import time
 
@@ -24,6 +25,8 @@ try:
 except ImportError:
     pass  # trust that we're getting run as a script
 
+
+cargodump = {}
 
 CFG_SHOW_SHOPPING = 'ShowShoppingList'
 STALE_AFTER_SECONDS = 5
@@ -182,7 +185,7 @@ class ShoppingListPlugin(plugin.HuttonHelperPlugin):
 
         plugin.HuttonHelperPlugin.__init__(self, helper)
         self.table_frame = None
-        self.missions = []
+        self.missions = [] # write function to pull current missions back from server this will have to be after we know commander
         self.cargo = {}
         self.visible_count = 0
 
@@ -220,22 +223,21 @@ class ShoppingListPlugin(plugin.HuttonHelperPlugin):
 
     def journal_entry(self, cmdr, _is_beta, _system, _station, entry, _state):
         "Act like a tiny EDMC plugin."
-
         method = 'event_{}'.format(entry['event'].lower())
         if hasattr(self, method):
             getattr(self, method)(entry)
             self.refresh()
 
     def event_cargo(self, entry):
-        "Handle ``Cargo``."
-
+        "Updates cargo"
         self.cargo = {}
 
         # TODO this is by the lowercase version FFS
-        for item in entry['Inventory']:
-            commodity, _desc = extract_commodity(item)
-            count = item['Count']
-            self.cargo[commodity] = count
+        if cargodump:
+            for item in cargodump['Inventory']:
+                commodity, _desc = extract_commodity(item)
+                count = item['Count']
+                self.cargo[commodity] = count
 
     def event_cargodepot(self, entry):
         "Handle ``CargoDepot``."
@@ -246,9 +248,10 @@ class ShoppingListPlugin(plugin.HuttonHelperPlugin):
 
         if 'Count' in entry and 'CargoType' in entry:
             # absent if a wing member dropped something off
-            commodity, _desc = extract_commodity(entry)
-            count = entry['Count']
-            self.cargo[commodity] -= count
+            if entry['UpdateType'] == 'Deliver':
+                commodity, _desc = extract_commodity(entry)
+                count = entry['Count']
+                self.cargo[commodity] -= count
 
     def event_ejectcargo(self, entry):
         "Handle ``EjectCargo``."
@@ -288,7 +291,7 @@ class ShoppingListPlugin(plugin.HuttonHelperPlugin):
     def event_missionaccepted(self, entry):
         "Handle ``MissionAccepted``."
 
-        for prefix in ['mission_collect', 'mission_passengervip', 'mission_mining']:
+        for prefix in ['mission_collect', 'mission_passengervip', 'mission_mining', 'mission_delivery']:
             if entry['Name'].lower().startswith(prefix):
                 break
 
@@ -325,7 +328,7 @@ class ShoppingListPlugin(plugin.HuttonHelperPlugin):
 
         known = set(mission['mission_id'] for mission in self.missions)
         active = set(mission['MissionID'] for mission in entry['Active'])
-
+        # This only seems to remove missing missions can it not populate the self.missions - future work
         for mission_id in known - active:
             self.__remove_mission(mission_id)
 

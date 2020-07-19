@@ -50,8 +50,9 @@ try:
     import widgets
     import xmit
     import market
-    import cargo
+    # import cargo
     import panic
+    import data
 
     from version import HH_VERSION
 
@@ -60,6 +61,8 @@ finally:
 
 this = sys.modules[__name__]  # pylint: disable=C0103
 this.msg = ""
+this.cargodump = {}
+
 
 FRONT_COVER_DELAY = 10  # seconds
 
@@ -71,6 +74,16 @@ def PANIC(description=None):
     exc_type, exc_value, exc_traceback = sys.exc_info()
     traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stderr)
 
+    errorreport = {}
+    errorreport['cmdr'] = news.commander
+    errorreport['huttonappversion'] = HH_VERSION
+    errorreport['edmcversion'] = appversion
+    errorreport['modulecall'] = description or ''
+    errorreport['traceback'] = traceback.format_exception(exc_type, exc_value, exc_traceback)
+    compress_json = json.dumps(errorreport)
+    error_data = zlib.compress(compress_json.encode('utf-8'))
+    #sys.stderr.write("Posting it...{}\r\n".format(compress_json.encode('utf-8')))
+    xmit.post('/errorreport', error_data, headers=xmit.COMPRESSED_OCTET_STREAM)
 
 def plugin_start3(plugin_dir):
     ""
@@ -94,7 +107,7 @@ def plugin_start(plugin_dir):
         progress.ProgressPlugin(this.helper),
         exploration.ExplorationPlugin(this.helper),
         market.MarketPlugin(this.helper),
-        cargo.CargoPlugin(this.helper),
+        # cargo.CargoPlugin(this.helper),
         # pwpevents.PwpEventsPlugin(this.helper),
         panic.PanicPlugin(this.helper),
     ]
@@ -230,6 +243,21 @@ def _status(text=''):
     this.status['text'] = text
 
 
+def _cargo_refresh(cmdr):
+    dump_path = data.get_journal_path('Cargo.json')
+    # sys.stderr.write("Reading cargo data from: {}\r\n".format(dump_path))
+    with open(dump_path, 'r') as dump:
+        dump = dump.read()
+        dump = json.loads(dump)
+        this.cargodump = dump
+        dump['commandername'] = cmdr
+        compress_json = json.dumps(dump)
+        cargo_data = zlib.compress(compress_json.encode('utf-8'))
+        # sys.stderr.write("Posting it...\r\n")
+        xmit.post('/missioncargo', cargo_data, headers=xmit.COMPRESSED_OCTET_STREAM)
+        # self.helper.status("Market data posted.")
+
+
 def plugin_prefs(parent, cmdr, is_beta):
     "Called each time the user opens EDMC settings. Return an ``nb.Frame``."
 
@@ -268,7 +296,7 @@ def prefs_changed(cmdr, is_beta):
 EVENT_STATUS_FORMATS = {
     'ApproachBody': "Approached {Body}",
     'ApproachSettlement': "Approached {Name}",
-    'CargoDepot': "Wing Mission Info updated",
+    'CargoDepot': "Delivery Mission Info updated",
     'CollectCargo': "Cargo scooped into cargo bay",
     'CommunityGoal': "Community Goal Data Received",
     'Died': "Oops.... you died :( :( :(",
@@ -338,7 +366,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
     transmit_json = zlib.compress(compress_json)
 
     event = entry['event']
-    #sys.stderr.write('event: {}\r\n'.format(event)) #Very Chatty
+    # sys.stderr.write('event: {}\r\n'.format(event)) #Very Chatty
 
     # Declare a function to make it easy to send the event to the server and get the response.
     # We've smuggled the transmit_json variable from journal_entry into xmit_event using a
@@ -352,6 +380,12 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
     status_format = EVENT_STATUS_FORMATS.get(event)
     if status_format:
         this.status['text'] = status_format.format(**entry)
+
+    # Update and Send cargo to server first then update plugins
+    if event == 'Cargo':
+        this._cargo_refresh(cmdr)
+        shopping.cargodump = this.cargodump
+
 
     # Update the plugins
     for plugin in this.plugins:

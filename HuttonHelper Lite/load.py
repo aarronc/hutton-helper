@@ -65,6 +65,16 @@ def PANIC(description=None):
     exc_type, exc_value, exc_traceback = sys.exc_info()
     traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stderr)
 
+    errorreport = {}
+    errorreport['cmdr'] = news.commander
+    errorreport['huttonappversion'] = HH_VERSION
+    errorreport['edmcversion'] = appversion
+    errorreport['modulecall'] = description or ''
+    errorreport['traceback'] = traceback.format_exception(exc_type, exc_value, exc_traceback)
+    compress_json = json.dumps(errorreport)
+    error_data = zlib.compress(compress_json.encode('utf-8'))
+    #sys.stderr.write("Posting it...{}\r\n".format(compress_json.encode('utf-8')))
+    xmit.post('/errorreport', error_data, headers=xmit.COMPRESSED_OCTET_STREAM)
 
 def plugin_start3(plugin_dir):
     ""
