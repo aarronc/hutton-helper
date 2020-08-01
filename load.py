@@ -6,12 +6,15 @@ try:
     import ttk
     import tkFont
     import tkMessageBox
+    is2 = True # used to check if is python2
 except ImportError:
     # for python 3
     import tkinter as tk
     import tkinter.ttk as ttk
     import tkinter.font as tkFont
     import tkinter.messagebox as tkMessageBox
+    import logging
+    is2 = False  # used to check if is python2
 
 import json
 import os
@@ -23,7 +26,7 @@ import zlib
 from canonnevents import whiteList
 
 from ttkHyperlinkLabel import HyperlinkLabel
-from config import config, applongname, appversion
+from config import config, applongname, appversion, appname
 import myNotebook as nb
 
 import requests # still here for CG code
@@ -66,13 +69,31 @@ this.cargodump = {}
 
 FRONT_COVER_DELAY = 10  # seconds
 
+if is2 == False:
+    plugin_name = os.path.basename(os.path.dirname(__file__))
+    logger = logging.getLogger("{}.{}".format(appname,plugin_name))
+    if not logger.hasHandlers():
+        level = logging.ERROR  # So logger.error(...) is equivalent to sys.stderr.write()
+        logger.setLevel(level)
+        logger_channel = logging.StreamHandler()
+        logger_channel.setLevel(level)
+        logger_formatter = logging.Formatter(f'%(asctime)s - %(name)s - %(levelname)s - %(module)s:%(lineno)d:%(funcName)s: %(message)s')
+        logger_formatter.default_time_format = '%Y-%m-%d %H:%M:%S'
+        logger_formatter.default_msec_format = '%s.%03d'
+        logger_channel.setFormatter(logger_formatter)
+        logger.addHandler(logger_channel)
 
 def PANIC(description=None):
     "Handle failure."
 
-    sys.stderr.write("PANIC: {}\r\n".format(description or ''))
     exc_type, exc_value, exc_traceback = sys.exc_info()
-    traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stderr)
+
+    if is2:
+        sys.stderr.write("ERROR: {}\r\n".format(description or ''))
+        traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stderr)
+    else:
+        logger.error("ERROR: {}\r\n".format(description or ''))
+        logger.error("{}\r\n".format("\n".join(traceback.format_exception(exc_type, exc_value, exc_traceback))))
 
     errorreport = {}
     errorreport['cmdr'] = news.commander
