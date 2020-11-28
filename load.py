@@ -73,7 +73,7 @@ if is2 == False:
     plugin_name = os.path.basename(os.path.dirname(__file__))
     logger = logging.getLogger("{}.{}".format(appname,plugin_name))
     if not logger.hasHandlers():
-        level = logging.ERROR  # So logger.error(...) is equivalent to sys.stderr.write()
+        level = logging.INFO  # this level means we can have level info and above So logger.info(...) is equivalent to sys.stderr.write() but puts an INFO tag on it logger.error(...) is possible gives ERROR tag
         logger.setLevel(level)
         logger_channel = logging.StreamHandler()
         logger_channel.setLevel(level)
@@ -82,6 +82,7 @@ if is2 == False:
         logger_formatter.default_msec_format = '%s.%03d'
         logger_channel.setFormatter(logger_formatter)
         logger.addHandler(logger_channel)
+
 
 def PANIC(description=None):
     "Handle failure."
@@ -111,6 +112,7 @@ def plugin_start3(plugin_dir):
     "Initialise the Hutton Helper plugin."
 
     plugin_start(plugin_dir)
+    logger.info("test")
 
     return 'Hutton Helper'
 
