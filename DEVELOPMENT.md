@@ -1,6 +1,6 @@
 # hutton-helper development
 
-A way to setup a dev environment for the HH Edmc Plugin
+A way to setup a dev environment for the HH Edmc Plugin. WARNING this is slightly outdated as EMDC is now on python3.x not 2.7
 
 ## Development Setup
 

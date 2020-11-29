@@ -25,7 +25,7 @@ If you have not installed EDMC or a plugin before, this will help you get starte
 
 ## Development
 
-If you would like to help with development it would be very much appreciated a guide on how to setup a development environment can be found [here](https://github.com/aarronc/hutton-helper/blob/master/DEVELOPMENT.md). but develop how every you are happy to do it, you don't have to do it the way it describes.
+If you would like to help with development it would be very much appreciated a guide on how to setup a development environment can be found [here](https://github.com/aarronc/hutton-helper/blob/master/DEVELOPMENT.md). but develop how ever you are happy to do it, you don't have to do it the way it describes.
 
 ## Any Issues / Ideas
 

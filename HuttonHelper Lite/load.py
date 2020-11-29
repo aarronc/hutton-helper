@@ -84,8 +84,8 @@ def PANIC(description=None):
         sys.stderr.write("ERROR: {}\r\n".format(description or ''))
         traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stderr)
     else:
-        logger.error("ERROR: {}\r\n".format(description or ''))
-        logger.error("{}\r\n".format("\n".join(traceback.format_exception(exc_type, exc_value, exc_traceback))))
+        logger.error("ERROR: {}".format(description or ''))
+        logger.error("{}".format("\n".join(traceback.format_exception(exc_type, exc_value, exc_traceback))))
 
     errorreport = {}
     errorreport['cmdr'] = news.commander
@@ -423,7 +423,6 @@ def cmdr_data(data, is_beta):
 def plugin_stop():
     "Called once at shutdown."
 
-    print("Farewell cruel world!")
     for plugin in this.plugins:
         try:
             plugin.plugin_stop()

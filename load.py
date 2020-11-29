@@ -37,7 +37,7 @@ try:
 
     # We import the rest of the Hutton Helper together in this block while
     # we've altered sys.path so we don't inhale files from EDMC "package"
-    # plugins by accident. https://git.io/fAQkf#python-package-plugins
+    # plugins by accident. https://github.com/EDCD/EDMarketConnector/blob/main/PLUGINS.md#python-package-plugins
 
     import exploration
     import forward
@@ -93,8 +93,8 @@ def PANIC(description=None):
         sys.stderr.write("ERROR: {}\r\n".format(description or ''))
         traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stderr)
     else:
-        logger.error("ERROR: {}\r\n".format(description or ''))
-        logger.error("{}\r\n".format("\n".join(traceback.format_exception(exc_type, exc_value, exc_traceback))))
+        logger.error("ERROR: {}".format(description or ''))
+        logger.error("{}".format("\n".join(traceback.format_exception(exc_type, exc_value, exc_traceback))))
 
     errorreport = {}
     errorreport['cmdr'] = news.commander
@@ -112,7 +112,6 @@ def plugin_start3(plugin_dir):
     "Initialise the Hutton Helper plugin."
 
     plugin_start(plugin_dir)
-    logger.info("test")
 
     return 'Hutton Helper'
 
@@ -475,7 +474,6 @@ def cmdr_data(data, is_beta):
 def plugin_stop():
     "Called once at shutdown."
 
-    print("Farewell cruel world!")
     for plugin in this.plugins:
         try:
             plugin.plugin_stop()

@@ -1,5 +1,5 @@
 """
-You'd better stock up on land mines for that trip, Commander.
+Influence who needs it ? we do but only in the right systems !
 """
 try:
     # for Python2
