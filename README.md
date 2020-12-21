@@ -1,152 +1,32 @@
-# hutton-helper
+# Hutton-Helper
 
-A plugin for the Elite Dangerous Market Connector, specifically written for the Hutton Orbital Truckers.
+A plugin for the Elite Dangerous Market Connector, specifically written for the [Hutton Orbital Truckers](https://huttonorbital.com/).
 
-## Development Setup
+This helps us keep track and credit all you commanders for the work you do for us and all of the great things you do to help us.
 
-Getting set up takes a few steps because EDMC is fussy, and because code editors like [Visual Studio Code][VSCode] need to see the modules EDMC provides while we're developing.
+All the stats can be found [here](https://hot.forthemug.com/)
 
-DON'T PANIC: these instructions are long only because
+## Installing the Addon
 
-* We're trying to make it _really hard_ to screw up, and
+Please grab your preferred version from the [Downloads Page](https://hot.forthemug.com/download/) and install doing the following
 
-* We're trying to leave your existing copy of Python unbroken
+`Note : If your familiar with EDMC this plugin is installed the same way as any other plugin`
 
-For the mug! Do this:
+If you have not installed EDMC or a plugin before, this will help you get started :-
 
-* Install [`git`](https://git-scm.com/download/win)
-
-* Install the 32 bit version of Python 2.7 to `c:\Program Files (x86)\Python27`
-
-  EDMC wants the 32 bit version. These instructions want that path. If you're willing to edit the path every time you cut and paste while you set up, no worries, put it anywhere you like. You'll only have to do it a few times.
-
-  Don't over-write your existing Python! These instructions will help you leave it just how you like it.
-
-* Download [`get-pip.py`](https://bootstrap.pypa.io/get-pip.py), e.g. to `%TEMP%`
-
-* Install `pip`:
-
-      "c:\Program Files (x86)\Python27\python.exe" "%TEMP%\get-pip.py" --user
-
-* Install `virtualenv`:
-
-      "c:\Program Files (x86)\Python27\python.exe" -m pip install virtualenv --user
-
-* **Change directory to wherever your code lives**. If you don't know where that is:
-
-      cd %HOMEPATH\Documents
-      mkdir source
-      cd source
-
-* Clone [`EDMarketConnector`][EDMC] and [`hutton-helper`][HH]:
-
-      git clone https://github.com/Marginal/EDMarketConnector.git
-      git clone https://github.com/aarronc/hutton-helper.git
-
-* Set up the virtual environment:
-
-      cd hutton-helper
-      "c:\Program Files (x86)\Python27\python.exe" -m virtualenv .
-
-* Activate the virtual environment:
-
-      Scripts\activate
-
-  You'll `activate` each time you resume development. It sets everything up so you're using a copy of Python in `hutton-helper`. That 32-bit Python you set up will remain pristine, apart from `pip` and `virtualenv`. Your usual 64-bit copy of Python 3 won't be touched at all.
-
-  Which is good, because now we need to get dirty.
-
-* Install everything EDMC needs, plus a couple extras:
-
-      cd ..\EDMarketConnector
-      pip install -r requirements.txt
-      pip install pylint pep8 rope
-
-* Launch EDMC for a test:
-
-      python EDMarketConnector.py
-
-* Read the output in your command line window for the location of wherever you've had `hutton-helper` installed:
-
-  > `Loading plugin hutton-helper from "C:\Users\sporebat\AppData\Local\EDMarketConnector\plugins\hutton-helper\load.py"`
-
-* Shut down EDMC
-
-* Start a new command window for the next few steps:
-
-      start
-
-* In that window, change directory to wherever `plugins` was above:
-
-      cd "C:\Users\sporebat\AppData\Local\EDMarketConnector\plugins"
-
-  If you're lucky, this'll work:
-
-      cd "%LOCALAPPDATA%\EDMarketConnector\plugins"
-
-* Disable that install of `hutton-helper`, then link in your development copy:
-
-      ren hutton-helper hutton-helper.disabled
-      junction "hutton-helper" "%HOMEPATH%\Documents\source\hutton-helper"
-
-  (If your source code lives somewhere, you'll need to adjust that second command.)
-
-* Throw away that command line window:
-
-      exit
-
-* **BASK IN HER GLORY**. You're all set up!
-
-## VS Code Setup
-
-To set up [Visual Studio Code][VSCode] for developing `hutton-helper`, install the [EditorConfig] and Python extensions:
-
-    code --install-extension EditorConfig.EditorConfig
-    code --install-extension  ms-python.python
-
-Then, copy the following JSON to `.vscode\settings.json` in your `hutton-helper` directory:
-
-```json
-{
-  "files.exclude": {
-    "**/.git": true,
-    "**/*.pyc": true,
-    "Scripts": true,
-    "Include": true,
-    "Lib": true,
-    "tcl": true
-  },
-  "python.pythonPath": "Scripts\\python.exe",
-  "python.linting.enabled": true,
-  "python.linting.pep8Enabled": true,
-  "python.linting.pylintUseMinimalCheckers": false
-}
-```
-
-Finally, create a `.env` file in `hutton-helper` containing:
-
-    PYTHONPATH=..\EDMarketConnector
-
-To launch your editor from that directory:
-
-    code .
+1. Download a program called Elite Dangerous Market Connector (EDMC) from [here](https://github.com/EDCD/EDMarketConnector/releases/) (This is what our plugin uses to work)
+1. Install the program you just downloaded.
+1. Open the program. (You may need to go to `C:\Program Files (x86)\EDMarketConnector` and open it from there. Sometimes it does not add a shortcut to your desktop)
+1. Once open go to `File > Settings`
+1. Look for the plugins tab on the window that has just popped up, its the last one on the right. Click on the tab and then on the open button.
+1. Create a folder in the directory that has opened up and call it HuttonHelper
+1. Download Full Version OR the Lite version of the Hutton Helper and open the .zip file ONLY 1 Version, you do not need both (In it you will see a lot of files that end in .py)
+1. Extract the files into the HuttonHelper folder you made in step 6 You can normally highlight all of the files and drag them into the folder or use the extract button
 
 ## Development
 
-To resume development:
+If you would like to help with development it would be very much appreciated a guide on how to setup a development environment can be found [here](https://github.com/aarronc/hutton-helper/blob/master/DEVELOPMENT.md). but develop how ever you are happy to do it, you don't have to do it the way it describes.
 
-    cd "%HOMEPATH%\Documents\source\hutton-helper"
-    Scripts\activate
-    code .
+## Any Issues / Ideas
 
-[EDMC]: https://github.com/Marginal/EDMarketConnector
-[HH]: https://github.com/aarronc/hutton-helper
-[VSCode]: https://code.visualstudio.com/
-[EditorConfig]: https://editorconfig.org/
-
-## Release
-
-    del *.zip
-    python pack.py
-
-... then upload the `.zip` file and `version.json` to the release directory.
+Please open an issue on Github or come over to the Hutton Orbital Truckers [Discord](https://discord.gg/qhyxrSn) or [Facebook](https://www.facebook.com/groups/HuttonOrbital)
