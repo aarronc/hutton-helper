@@ -13,6 +13,7 @@ except ImportError:
 import json
 import sys
 import zlib
+import datetime
 
 import plugin
 import xmit
@@ -34,6 +35,7 @@ class ExplorationPlugin(plugin.HuttonHelperPlugin):
         self.frame = None
         self.cmdr = None
         self.credits = None
+        self.lastcheck = datetime.datetime.now()
         self.checking = False
         self.fails = 0
 
@@ -136,8 +138,14 @@ class ExplorationPlugin(plugin.HuttonHelperPlugin):
             self.__fail_safe()  # again in case self.textvariable was None last time
             return
 
+        if not datetime.datetime.now() > self.lastcheck + datetime.timedelta(seconds = 5):
+            #sys.stderr.write("Too soon...\r\n")
+            return
+
+
         try:
             self.checking = True
+            self.lastcheck = datetime.datetime.now()
             path = '/explocredit.json/{}'.format(self.cmdr)
             json_data = xmit.get(path)
 
