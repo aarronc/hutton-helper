@@ -19,6 +19,7 @@ import sys
 import textwrap
 import time
 import traceback
+import uuid
 import zlib
 from canonnevents import whiteList
 
@@ -65,7 +66,7 @@ this.cargodump = {}
 
 
 FRONT_COVER_DELAY = 10  # seconds
-
+UUID = str(uuid.uuid4())
 
 def PANIC(description=None):
     "Handle failure."
@@ -360,6 +361,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
     entry['hhsystemname'] = system
     entry['huttonappversion'] = HH_VERSION
     entry['edmcversion'] = appversion
+    entry['uuid'] = UUID
 
     compress_json = json.dumps(entry)
     compress_json = compress_json.encode('utf-8')
