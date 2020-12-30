@@ -1,6 +1,8 @@
 """
 Track the trucker's progress.
 """
+import sys
+
 try:
     # for Python2
     import Tkinter as tk
@@ -224,6 +226,7 @@ class ProgressPlugin(plugin.HuttonHelperPlugin):
         self.display = None
         self.data = None
         self.cmdr = None
+        self.lastfetch = datetime.datetime.now()
         self.fetching = False
 
     def __reset(self, cmdr=None):
@@ -247,10 +250,15 @@ class ProgressPlugin(plugin.HuttonHelperPlugin):
         if not self.cmdr:
             return
 
+        if not datetime.datetime.now() > self.lastfetch + datetime.timedelta(seconds = 5):
+            #sys.stderr.write("Too soon...\r\n")
+            return
+
         if self.fetching:
             return
 
         try:
+            self.lastfetch = datetime.datetime.now()
             self.fetching = True
             self.data = xmit.get('/day-week-stats.json/{}'.format(self.cmdr))
             if self.display:
