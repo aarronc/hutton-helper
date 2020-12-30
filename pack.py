@@ -93,7 +93,7 @@ def main():
     with open(zip_filename, 'wb') as f:
         f.write(s)
 
-    version_filename = 'version.json'
+    version_filename = 'live_plugin_version.json'
     sys.stderr.write('Writing {}...\r\n'.format(version_filename))
     with open(version_filename, 'w') as f:
         f.write(json.dumps({
