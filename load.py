@@ -269,6 +269,8 @@ def _cargo_refresh(cmdr):
     # sys.stderr.write("Reading cargo data from: {}\r\n".format(dump_path))
     with open(dump_path, 'r') as dump:
         dump = dump.read()
+        if dump ==  "":
+            return
         dump = json.loads(dump)
         this.cargodump = dump
         dump['commandername'] = cmdr

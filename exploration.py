@@ -107,6 +107,7 @@ class ExplorationPlugin(plugin.HuttonHelperPlugin):
             self.credits = 0
             reset_path = '/exploreset'
             compress_json_reset = json.dumps(entry)
+            compress_json_reset = compress_json_reset.encode('utf-8')
             transmit_json_reset = zlib.compress(compress_json_reset)
             xmit.post(reset_path, data=transmit_json_reset, parse=False, headers=xmit.COMPRESSED_OCTET_STREAM)
             self.__check_again()
