@@ -556,7 +556,12 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
     entry['hhstationname'] = station
     entry['hhsystemname'] = system
     entry['huttonappversion'] = HH_VERSION
-    entry['edmcversion'] = appversion
+    
+    if isinstance(appversion, str):
+        entry['edmcversion'] = appversion
+    else:
+        entry['edmcversion'] = str(appversion())
+
     entry['uuid'] = UUID
 
     compress_json = json.dumps(entry)
