@@ -250,8 +250,9 @@ class ShoppingListPlugin(plugin.HuttonHelperPlugin):
             # absent if a wing member dropped something off
             if entry['UpdateType'] == 'Deliver':
                 commodity, _desc = extract_commodity(entry)
-                count = entry['Count']
-                self.cargo[commodity] -= count
+                if self.cargo.get(commodity) is not None: # may not exist if edmc hasnt received cargo event or restart of edmc during gamepley. #FUTURE IDEA once we know commander we can check cargo.json
+                    count = entry['Count']
+                    self.cargo[commodity] -= count
 
     def event_ejectcargo(self, entry):
         "Handle ``EjectCargo``."

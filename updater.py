@@ -10,12 +10,16 @@ try:
     import urlparse
     import ConfigParser
     import StringIO
+    is2 = True # used to check if is python2
 except ImportError:
     # for python 3
     import tkinter as tk
     import urllib.parse as urlparse
     import configparser
     from io import StringIO
+    import logging
+    is2 = False  # used to check if is python2
+    
 import collections
 import hashlib
 import json
@@ -29,6 +33,7 @@ import plugin
 
 import myNotebook as nb
 from ttkHyperlinkLabel import HyperlinkLabel
+from config import applongname, appversion, appname
 
 HH_TEXT_UPDATE_AVAILABLE = "UPDATE AVAILABLE to version {remote_version}"
 HH_TEXT_UPDATED = "UPDATED. Please restart EDMC."
@@ -50,6 +55,19 @@ INCLUDE_EXTENSIONS = set([
     '.py'
 ])
 
+if is2 == False:
+    plugin_name = os.path.basename(os.path.dirname(__file__))
+    logger = logging.getLogger("{}.{}".format(appname,plugin_name))
+    if not logger.hasHandlers():
+        level = logging.INFO  # this level means we can have level info and above So logger.info(...) is equivalent to sys.stderr.write() but puts an INFO tag on it logger.error(...) is possible gives ERROR tag
+        logger.setLevel(level)
+        logger_channel = logging.StreamHandler()
+        logger_channel.setLevel(level)
+        logger_formatter = logging.Formatter(f'%(asctime)s - %(name)s - %(levelname)s - %(module)s:%(lineno)d:%(funcName)s: %(message)s')
+        logger_formatter.default_time_format = '%Y-%m-%d %H:%M:%S'
+        logger_formatter.default_msec_format = '%s.%03d'
+        logger_channel.setFormatter(logger_formatter)
+        logger.addHandler(logger_channel)
 
 class Version(collections.namedtuple('Version', ['major', 'minor', 'patch'])):
     "A semantic version."
@@ -112,7 +130,10 @@ def delete_current_version(here=HH_PLUGIN_DIRECTORY):
 
     for filename in sorted(os.listdir(here)):
         if os.path.splitext(filename)[1] in INCLUDE_EXTENSIONS:
-            sys.stderr.write("Deleting {}...\r\n".format(filename))
+            if is2:
+                sys.stderr.write("Deleting {}...\r\n".format(filename))
+            else:
+                logger.info("Deleting {}...".format(filename))
             os.remove(os.path.join(here, filename))
 
 
@@ -121,7 +142,10 @@ def unzip_new_version(z, here=HH_PLUGIN_DIRECTORY):
 
     with z:
         for filename in sorted(z.namelist()):
-            sys.stderr.write("Extracting {}...\r\n".format(filename))
+            if is2:
+                sys.stderr.write("Extracting {}...\r\n".format(filename))
+            else:
+                logger.info("Extracting {}...".format(filename))
             z.extract(filename, path=here)
 
 

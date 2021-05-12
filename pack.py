@@ -51,7 +51,7 @@ def build_distro_string(here=HH_PLUGIN_DIRECTORY):
         z.comment = json.dumps({
             'version': HH_VERSION,
             'digest': 'bone',
-        })
+        }).encode()
 
     return f.getvalue(), digest
 
@@ -63,8 +63,8 @@ def read_distro_string(s, digest=None):
     DOES NOT CLOSE IT.
     """
 
-    assert isinstance(s, str)
     if is2:
+        assert isinstance(s, str)
         f = StringIO.StringIO(s)
     else:
         f = BytesIO(s)
@@ -93,7 +93,7 @@ def main():
     with open(zip_filename, 'wb') as f:
         f.write(s)
 
-    version_filename = 'version.json'
+    version_filename = 'live_plugin_version.json'
     sys.stderr.write('Writing {}...\r\n'.format(version_filename))
     with open(version_filename, 'w') as f:
         f.write(json.dumps({

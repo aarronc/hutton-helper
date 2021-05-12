@@ -26,6 +26,8 @@ class CargoPlugin(plugin.HuttonHelperPlugin):
             # sys.stderr.write("Reading cargo data from: {}\r\n".format(dump_path))
             with open(dump_path, 'r') as dump:
                 dump = dump.read()
+                if dump == "":
+                    return
                 dump = json.loads(dump)
                 dump['commandername'] = cmdr
                 compress_json = json.dumps(dump)

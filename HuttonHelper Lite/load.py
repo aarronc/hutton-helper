@@ -6,12 +6,15 @@ try:
     import ttk
     import tkFont
     import tkMessageBox
+    is2 = True # used to check if python2
 except ImportError:
     # for python 3
     import tkinter as tk
     import tkinter.ttk as ttk
     import tkinter.font as tkFont
     import tkinter.messagebox as tkMessageBox
+    import logging
+    is2 = False  # used to check if is python2
 
 import json
 import os
@@ -24,7 +27,7 @@ import zlib
 from canonnevents import whiteList
 
 from ttkHyperlinkLabel import HyperlinkLabel
-from config import config, applongname, appversion
+from config import config, applongname, appversion, appname
 import myNotebook as nb
 
 import requests # still here for CG code
@@ -59,12 +62,29 @@ this.msg = ""
 FRONT_COVER_DELAY = 10  # seconds
 UUID = str(uuid.uuid4())
 
+if is2 == False:
+    plugin_name = os.path.basename(os.path.dirname(__file__))
+    logger = logging.getLogger("{}.{}".format(appname,plugin_name))
+    if not logger.hasHandlers():
+        level = logging.ERROR  # So logger.error(...) is equivalent to sys.stderr.write()
+        logger.setLevel(level)
+        logger_channel = logging.StreamHandler()
+        logger_channel.setLevel(level)
+        logger_formatter = logging.Formatter(f'%(asctime)s - %(name)s - %(levelname)s - %(module)s:%(lineno)d:%(funcName)s: %(message)s')
+        logger_formatter.default_time_format = '%Y-%m-%d %H:%M:%S'
+        logger_formatter.default_msec_format = '%s.%03d'
+        logger_channel.setFormatter(logger_formatter)
+        logger.addHandler(logger_channel)
+
 def PANIC(description=None):
     "Handle failure."
 
-    sys.stderr.write("PANIC: {}\r\n".format(description or ''))
-    exc_type, exc_value, exc_traceback = sys.exc_info()
-    traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stderr)
+    if is2:
+        sys.stderr.write("ERROR: {}\r\n".format(description or ''))
+        traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stderr)
+    else:
+        logger.error("ERROR: {}".format(description or ''))
+        logger.error("{}".format("\n".join(traceback.format_exception(exc_type, exc_value, exc_traceback))))
 
     errorreport = {}
     errorreport['cmdr'] = news.commander
@@ -83,7 +103,7 @@ def plugin_start3(plugin_dir):
 
     plugin_start(plugin_dir)
 
-    return 'Hutton Helper'
+    return 'Hutton Helper Lite'
 
 def plugin_start(plugin_dir):
     "Initialise the Hutton Helper plugin."
@@ -105,7 +125,7 @@ def plugin_start(plugin_dir):
         except:
             PANIC("{}.plugin_start".format(plugin))
 
-    return 'Hutton Helper'
+    return 'Hutton Helper Lite'
 
 def plugin_app(parent):
     "Called once to get the plugin widget. Return a ``tk.Frame``."
@@ -288,6 +308,227 @@ REDEEM_TYPE_STATUS_FORMATS = {
     'trade': "{:,.0f} credits earned from trade voucher",
 }
 
+ITEM_LOOKUP = {
+    "advancedcatalysers" : "Advanced Catalysers",
+    "advancedmedicines" : "Advanced Medicines",
+    "agriculturalmedicines" : "Agri-Medicines",
+    "agronomictreatment" : "Agronomic Treatment",
+    "airelics" : "AI Relics",
+    "alexandrite" : "Alexandrite",
+    "algae" : "Algae",
+    "aluminium" : "Aluminium",
+    "ancientcasket" : "Ancient Casket",
+    "ancientkey" : "Ancient Key",
+    "ancientorb" : "Ancient Orb",
+    "ancientrelic" : "Ancient Relic",
+    "ancienttablet" : "Ancient Tablet",
+    "ancienttotem" : "Ancient Totem",
+    "ancienturn" : "Ancient Urn",
+    "animalmeat" : "Animal Meat",
+    "animalmonitors" : "Animal Monitors",
+    "antimattercontainmentunit" : "Antimatter Containment Unit",
+    "antiquejewellery" : "Antique Jewellery",
+    "antiquities" : "Antiquities",
+    "aquaponicsystems" : "Aquaponic Systems",
+    "articulationmotors" : "Articulation Motors",
+    "assaultplans" : "Assault Plans",
+    "atmosphericextractors" : "Atmospheric Processors",
+    "autofabricators" : "Auto-Fabricators",
+    "basicmedicines" : "Basic Medicines",
+    "basicnarcotics" : "Narcotics",
+    "battleweapons" : "Battle Weapons",
+    "bauxite" : "Bauxite",
+    "beer" : "Beer",
+    "benitoite" : "Benitoite",
+    "bertrandite" : "Bertrandite",
+    "beryllium" : "Beryllium",
+    "bioreducinglichen" : "Bioreducing Lichen",
+    "biowaste" : "Biowaste",
+    "bismuth" : "Bismuth",
+    "bootlegliquor" : "Bootleg Liquor",
+    "bromellite" : "Bromellite",
+    "buildingfabricators" : "Building Fabricators",
+    "ceramiccomposites" : "Ceramic Composites",
+    "chemicalwaste" : "Chemical Waste",
+    "clothing" : "Clothing",
+    "cmmcomposite" : "CMM Composite",
+    "cobalt" : "Cobalt",
+    "coffee" : "Coffee",
+    "coltan" : "Coltan",
+    "combatstabilisers" : "Combat Stabilisers",
+    "comercialsamples" : "Commercial Samples",
+    "computercomponents" : "Computer Components",
+    "conductivefabrics" : "Conductive Fabrics",
+    "consumertechnology" : "Consumer Technology",
+    "coolinghoses" : "Micro-weave Cooling Hoses",
+    "copper" : "Copper",
+    "cropharvesters" : "Crop Harvesters",
+    "cryolite" : "Cryolite",
+    "damagedescapepod" : "Damaged Escape Pod",
+    "datacore" : "Data Core",
+    "diagnosticsensor" : "Hardware Diagnostic Sensor",
+    "diplomaticbag" : "Diplomatic Bag",
+    "domesticappliances" : "Domestic Appliances",
+    "drones" : "Limpets",
+    "duradrives" : "Duradrives",
+    "earthrelics" : "Earth Relics",
+    "emergencypowercells" : "Emergency Power Cells",
+    "encripteddatastorage" : "Encrypted Data Storage",
+    "encryptedcorrespondence" : "Encrypted Correspondence",
+    "evacuationshelter" : "Evacuation Shelter",
+    "exhaustmanifold" : "Exhaust Manifold",
+    "explosives" : "Explosives",
+    "fish" : "Fish",
+    "foodcartridges" : "Food Cartridges",
+    "fossilremnants" : "Fossil Remnants",
+    "fruitandvegetables" : "Fruit and Vegetables",
+    "gallite" : "Gallite",
+    "gallium" : "Gallium",
+    "genebank" : "Gene Bank",
+    "geologicalequipment" : "Geological Equipment",
+    "geologicalsamples" : "Geological Samples",
+    "gold" : "Gold",
+    "goslarite" : "Goslarite",
+    "grain" : "Grain",
+    "grandidierite" : "Grandidierite",
+    "hafnium178" : "Hafnium 178",
+    "hazardousenvironmentsuits" : "H.E. Suits",
+    "heatsinkinterlink" : "Heatsink Interlink",
+    "heliostaticfurnaces" : "Microbial Furnaces",
+    "hnshockmount" : "HN Shock Mount",
+    "hostage" : "Hostages",
+    "hydrogenfuel" : "Hydrogen Fuel",
+    "hydrogenperoxide" : "Hydrogen Peroxide",
+    "imperialslaves" : "Imperial Slaves",
+    "indite" : "Indite",
+    "indium" : "Indium",
+    "insulatingmembrane" : "Insulating Membrane",
+    "iondistributor" : "Ion Distributor",
+    "jadeite" : "Jadeite",
+    "landmines" : "Landmines",
+    "lanthanum" : "Lanthanum",
+    "largeexplorationdatacash" : "Large Survey Data Cache",
+    "leather" : "Leather",
+    "lepidolite" : "Lepidolite",
+    "liquidoxygen" : "Liquid oxygen",
+    "liquor" : "Liquor",
+    "lithium" : "Lithium",
+    "lithiumhydroxide" : "Lithium Hydroxide",
+    "lowtemperaturediamond" : "Low Temperature Diamonds",
+    "magneticemittercoil" : "Magnetic Emitter Coil",
+    "marinesupplies" : "Marine Equipment",
+    "medicaldiagnosticequipment" : "Medical Diagnostic Equipment",
+    "metaalloys" : "Meta-Alloys",
+    "methaneclathrate" : "Methane Clathrate",
+    "methanolmonohydratecrystals" : "Methanol Monohydrate Crystals",
+    "microcontrollers" : "Micro Controllers",
+    "militarygradefabrics" : "Military Grade Fabrics",
+    "militaryintelligence" : "Military Intelligence",
+    "mineralextractors" : "Mineral Extractors",
+    "mineraloil" : "Mineral Oil",
+    "modularterminals" : "Modular Terminals",
+    "moissanite" : "Moissanite",
+    "monazite" : "Monazite",
+    "musgravite" : "Musgravite",
+    "mutomimager" : "Muon Imager",
+    "mysteriousidol" : "Mysterious Idol",
+    "nanobreakers" : "Nanobreakers",
+    "nanomedicines" : "Nanomedicines",
+    "naturalfabrics" : "Natural Fabrics",
+    "neofabricinsulation" : "Neofabric Insulation",
+    "nerveagents" : "Nerve Agents",
+    "nonlethalweapons" : "Non-Lethal Weapons",
+    "occupiedcryopod" : "Occupied Escape Pod",
+    "opal" : "Void Opal",
+    "osmium" : "Osmium",
+    "painite" : "Painite",
+    "palladium" : "Palladium",
+    "performanceenhancers" : "Performance Enhancers",
+    "personaleffects" : "Personal Effects",
+    "personalweapons" : "Personal Weapons",
+    "pesticides" : "Pesticides",
+    "platinum" : "Platinum",
+    "politicalprisoner" : "Political Prisoners",
+    "polymers" : "Polymers",
+    "powerconverter" : "Power Converter",
+    "powergenerators" : "Power Generators",
+    "powergridassembly" : "Energy Grid Assembly",
+    "powertransferconduits" : "Power Transfer Bus",
+    "praseodymium" : "Praseodymium",
+    "preciousgems" : "Precious Gems",
+    "progenitorcells" : "Progenitor Cells",
+    "prohibitedresearchmaterials" : "Prohibited Research Materials",
+    "pyrophyllite" : "Pyrophyllite",
+    "radiationbaffle" : "Radiation Baffle",
+    "reactivearmour" : "Reactive Armour",
+    "reinforcedmountingplate" : "Reinforced Mounting Plate",
+    "resonatingseparators" : "Resonating Separators",
+    "rhodplumsite" : "Rhodplumsite",
+    "robotics" : "Robotics",
+    "rockforthfertiliser" : "Rockforth Fertiliser",
+    "rutile" : "Rutile",
+    "samarium" : "Samarium",
+    "sap8corecontainer" : "SAP 8 Core Container",
+    "scientificresearch" : "Scientific Research",
+    "scientificsamples" : "Scientific Samples",
+    "scrap" : "Scrap",
+    "semiconductors" : "Semiconductors",
+    "serendibite" : "Serendibite",
+    "silver" : "Silver",
+    "skimercomponents" : "Skimmer Components",
+    "slaves" : "Slaves",
+    "smallexplorationdatacash" : "Small Survey Data Cache",
+    "spacepioneerrelics" : "Space Pioneer Relics",
+    "structuralregulators" : "Structural Regulators",
+    "superconductors" : "Superconductors",
+    "surfacestabilisers" : "Surface Stabilisers",
+    "survivalequipment" : "Survival Equipment",
+    "syntheticfabrics" : "Synthetic Fabrics",
+    "syntheticmeat" : "Synthetic Meat",
+    "syntheticreagents" : "Synthetic Reagents",
+    "taaffeite" : "Taaffeite",
+    "tacticaldata" : "Tactical Data",
+    "tantalum" : "Tantalum",
+    "tea" : "Tea",
+    "telemetrysuite" : "Telemetry Suite",
+    "terrainenrichmentsystems" : "Land Enrichment Systems",
+    "thallium" : "Thallium",
+    "thargoidheart" : "Thargoid Heart",
+    "thargoidscouttissuesample" : "Thargoid Scout Tissue Sample",
+    "thargoidtissuesampletype1" : "Thargoid Cyclops Tissue Sample",
+    "thargoidtissuesampletype2" : "Thargoid Basilisk Tissue Sample",
+    "thargoidtissuesampletype3" : "Thargoid Medusa Tissue Sample",
+    "thargoidtissuesampletype4" : "Thargoid Hydra Tissue Sample",
+    "thermalcoolingunits" : "Thermal Cooling Units",
+    "thorium" : "Thorium",
+    "timecapsule" : "Time Capsule",
+    "titanium" : "Titanium",
+    "tobacco" : "Tobacco",
+    "toxicwaste" : "Toxic Waste",
+    "trinketsoffortune" : "Trinkets of Hidden Fortune",
+    "unknownartifact" : "Thargoid Sensor",
+    "unknownartifact2" : "Thargoid Probe",
+    "unknownartifact3" : "Thargoid Link",
+    "unknownbiologicalmatter" : "Thargoid Biological Matter",
+    "unknownresin" : "Thargoid Resin",
+    "unknowntechnologysamples" : "Thargoid Technology Samples",
+    "unstabledatacore" : "Unstable Data Core",
+    "uraninite" : "Uraninite",
+    "uranium" : "Uranium",
+    "usscargoancientartefact" : "Ancient Artefact",
+    "usscargoblackbox" : "Black Box",
+    "usscargoexperimentalchemicals" : "Experimental Chemicals",
+    "usscargomilitaryplans" : "Military Plans",
+    "usscargoprototypetech" : "Prototype Tech",
+    "usscargorareartwork" : "Rare Artwork",
+    "usscargorebeltransmissions" : "Rebel Transmissions",
+    "usscargotechnicalblueprints" : "Technical Blueprints",
+    "usscargotradedata" : "Trade Data",
+    "water" : "Water",
+    "waterpurifiers" : "Water Purifiers",
+    "wine" : "Wine",
+    "wreckagecomponents" : "Wreckage Components"
+ }
 
 def journal_entry(cmdr, is_beta, system, station, entry, state):
     """
@@ -351,10 +592,10 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
     if event == 'MarketBuy':
         # For some events, we need our status to be based on translations of the event that
         # string.format can't do without a scary custom formatter:
-        this.status['text'] = "{:,.0f} {} bought".format(float(entry['Count']), entry['Type'])
+        this.status['text'] = "{:,.0f} {} bought".format(float(entry['Count']), ITEM_LOOKUP.get(entry['Type'], entry['Type']))
 
     elif event == 'MarketSell':
-        this.status['text'] = "{:,.0f} {} sold".format(float(entry['Count']), entry['Type'])
+        this.status['text'] = "{:,.0f} {} sold".format(float(entry['Count']), ITEM_LOOKUP.get(entry['Type'], entry['Type']))
 
     elif event == 'FactionKillBond':
         this.status['text'] = "Kill Bond Earned for {:,.0f} credits".format(float(entry['Reward']))

@@ -3,7 +3,6 @@
 *.pyc
 *.pyo
 *.zip
-*.old
 data
 hutton.ini
 Include

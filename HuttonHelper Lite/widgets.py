@@ -16,7 +16,7 @@ except ImportError:
 
 from ttkHyperlinkLabel import HyperlinkLabel
 
-DONT_PANIC = "Psymosn Sucks" # Original DON'T PANIC
+DONT_PANIC = "Nothing"
 TK_DEFAULT_FONT = 'TkDefaultFont'
 
 
