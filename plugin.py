@@ -57,7 +57,7 @@ class HuttonHelperPreferences(UserDict.DictMixin if is2 else collections.Mutable
     def __getitem__(self, pref):
         "Get a preference."
 
-        value = self.__config.get(add_config_prefix(pref))
+        value = self.__config.get_str(add_config_prefix(pref))
         if value is None:
             raise KeyError(pref)
         else:
