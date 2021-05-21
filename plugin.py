@@ -62,7 +62,7 @@ class HuttonHelperPreferences(UserDict.DictMixin if is2 else collections.Mutable
             raise KeyError(pref)
         else:
             self.__prefs.add(pref)  # Surprise!
-        return json.loads(value)
+        return json.loads(str(value))
 
     def __setitem__(self, pref, value):
         "Set a preference to a JSON serialisable value."
