@@ -4,9 +4,13 @@ Looks after our data.
 
 import os, sys
 
-import config  # EDMC
+from config import config  # EDMC
 
 import xmit
+
+# For compatibility with pre-5.0.0
+if not hasattr(config, 'get_str'):
+    config.get_str = config.get
 
 HH_PLUGIN_DIRECTORY = os.path.dirname(os.path.realpath(__file__))
 
@@ -27,5 +31,5 @@ def get_data_path(*args):
 def get_journal_path(*args):
     "Get the path to the journal directory, or to a subdirectory or filename in it."
 
-    logdir = config.config.get('journaldir') or config.config.default_journal_dir
+    logdir = config.get_str('journaldir') or config.default_journal_dir
     return os.path.join(logdir, *args)

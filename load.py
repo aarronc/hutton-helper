@@ -28,6 +28,11 @@ from canonnevents import whiteList
 
 from ttkHyperlinkLabel import HyperlinkLabel
 from config import config, applongname, appversion, appname
+
+# For compatibility with pre-5.0.0
+if not hasattr(config, 'get_str'):
+    config.get_str = config.get
+
 import myNotebook as nb
 
 import requests # still here for CG code
