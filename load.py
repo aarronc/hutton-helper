@@ -103,7 +103,7 @@ def PANIC(description=None):
     errorreport = {}
     errorreport['cmdr'] = news.commander
     errorreport['huttonappversion'] = HH_VERSION
-    errorreport['edmcversion'] = appversion
+    errorreport['edmcversion'] = str(appversion)
     errorreport['modulecall'] = description or ''
     errorreport['traceback'] = traceback.format_exception(exc_type, exc_value, exc_traceback)
     compress_json = json.dumps(errorreport)
@@ -694,7 +694,7 @@ def cmdr_data(data, is_beta):
     "Called shortly after startup with a dump of information from Frontier."
 
     if not is_beta:
-        compress_json = json.dumps(data)
+        compress_json = json.dumps(dict(data))
         transmit_json = zlib.compress(compress_json.encode('utf-8'))
         xmit.post('/docked', parse=False, data=transmit_json, headers=xmit.COMPRESSED_OCTET_STREAM)
 
