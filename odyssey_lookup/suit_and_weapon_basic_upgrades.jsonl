@@ -1,0 +1,198 @@
+{
+   "Suit":{
+      "Remlock":{
+         "Level 2 Upgrade":{
+            "suitschematic":1,
+            "healthmonitor":1,
+            "largecapacitypowerregulator":1,
+            "manufacturinginstructions":1,
+            "carbonfibreplating":5,
+            "graphene":5
+         },
+         "Level 3 Upgrade":{
+            "suitschematic":5,
+            "healthmonitor":5,
+            "largecapacitypowerregulator":5,
+            "manufacturinginstructions":5,
+            "carbonfibreplating":15,
+            "graphene":15
+         },
+         "Level 4 Upgrade":{
+            "suitschematic":10,
+            "healthmonitor":10,
+            "largecapacitypowerregulator":10,
+            "manufacturinginstructions":10,
+            "carbonfibreplating":25,
+            "graphene":25
+         },
+         "Level 5 Upgrade":{
+            "suitschematic":15,
+            "healthmonitor":15,
+            "largecapacitypowerregulator":15,
+            "manufacturinginstructions":15,
+            "carbonfibreplating":35,
+            "graphene":35
+         }
+      },
+      "Supratech":{
+         "Level 2 Upgrade":{
+            "suitschematic":1,
+            "healthmonitor":1,
+            "largecapacitypowerregulator":1,
+            "manufacturinginstructions":1,
+            "aerogel":5,
+            "graphene":5
+         },
+         "Level 3 Upgrade":{
+            "suitschematic":5,
+            "healthmonitor":5,
+            "largecapacitypowerregulator":5,
+            "manufacturinginstructions":5,
+            "aerogel":15,
+            "graphene":15
+         },
+         "Level 4 Upgrade":{
+            "suitschematic":10,
+            "healthmonitor":10,
+            "largecapacitypowerregulator":10,
+            "manufacturinginstructions":10,
+            "aerogel":25,
+            "graphene":25
+         },
+         "Level 5 Upgrade":{
+            "suitschematic":15,
+            "healthmonitor":15,
+            "largecapacitypowerregulator":15,
+            "manufacturinginstructions":15,
+            "aerogel":35,
+            "graphene":35
+         }
+      },
+      "Manticore":{
+         "Level 2 Upgrade":{
+            "suitschematic":1,
+            "healthmonitor":1,
+            "largecapacitypowerregulator":1,
+            "manufacturinginstructions":1,
+            "titaniumplating":5,
+            "graphene":5
+         },
+         "Level 3 Upgrade":{
+            "suitschematic":5,
+            "healthmonitor":5,
+            "largecapacitypowerregulator":5,
+            "manufacturinginstructions":5,
+            "titaniumplating":15,
+            "graphene":15
+         },
+         "Level 4 Upgrade":{
+            "suitschematic":10,
+            "healthmonitor":10,
+            "largecapacitypowerregulator":10,
+            "manufacturinginstructions":10,
+            "titaniumplating":25,
+            "graphene":25
+         },
+         "Level 5 Upgrade":{
+            "suitschematic":15,
+            "healthmonitor":15,
+            "largecapacitypowerregulator":15,
+            "manufacturinginstructions":15,
+            "aerotitaniumplatinggel":35,
+            "graphene":35
+         }
+      }
+   },
+   "Weapon":{
+      "Kinematic":{
+         "Level 2 Upgrade":{
+            "weaponschematic":1,
+            "compressionliquefiedgas":1,
+            "manufacturinginstructions":1,
+            "tungstencarbide":5,
+            "weaponcomponent":5
+         },
+         "Level 3 Upgrade":{
+            "weaponschematic":5,
+            "compressionliquefiedgas":5,
+            "manufacturinginstructions":5,
+            "tungstencarbide":15,
+            "weaponcomponent":15
+         },
+         "Level 4 Upgrade":{
+            "weaponschematic":10,
+            "compressionliquefiedgas":10,
+            "manufacturinginstructions":10,
+            "tungstencarbide":25,
+            "weaponcomponent":25
+         },
+         "Level 5 Upgrade":{
+            "weaponschematic":15,
+            "compressionliquefiedgas":15,
+            "manufacturinginstructions":15,
+            "tungstencarbide":35,
+            "weaponcomponent":35
+         }
+      },
+      "Manticore":{
+         "Level 2 Upgrade":{
+            "weaponschematic":1,
+            "ionisedgas":1,
+            "manufacturinginstructions":1,
+            "chemicalsuperbase":5,
+            "microelectrode":5
+         },
+         "Level 3 Upgrade":{
+            "weaponschematic":5,
+            "ionisedgas":5,
+            "manufacturinginstructions":5,
+            "chemicalsuperbase":15,
+            "microelectrode":15
+         },
+         "Level 4 Upgrade":{
+            "weaponschematic":10,
+            "ionisedgas":10,
+            "manufacturinginstructions":10,
+            "chemicalsuperbase":25,
+            "microelectrode":25
+         },
+         "Level 5 Upgrade":{
+            "weaponschematic":15,
+            "ionisedgas":15,
+            "manufacturinginstructions":15,
+            "chemicalsuperbase":35,
+            "microelectrode":35
+         }
+      },
+      "Takada":{
+         "Level 2 Upgrade":{
+            "weaponschematic":1,
+            "ionisedgas":1,
+            "manufacturinginstructions":1,
+            "microelectrode":5,
+            "opticalfibre":5
+         },
+         "Level 3 Upgrade":{
+            "weaponschematic":5,
+            "ionisedgas":5,
+            "manufacturinginstructions":5,
+            "microelectrode":15,
+            "opticalfibre":15
+         },
+         "Level 4 Upgrade":{
+            "weaponschematic":10,
+            "ionisedgas":10,
+            "manufacturinginstructions":10,
+            "microelectrode":25,
+            "opticalfibre":25
+         },
+         "Level 5 Upgrade":{
+            "weaponschematic":15,
+            "ionisedgas":15,
+            "manufacturinginstructions":15,
+            "microelectrode":35,
+            "opticalfibre":35
+         }
+      }
+   }
+}
