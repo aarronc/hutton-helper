@@ -3,6 +3,7 @@
 *.pyc
 *.pyo
 *.zip
+*.old
 data
 hutton.ini
 Include
@@ -12,4 +13,4 @@ Scripts
 tcl
 version.json
 live_plugin_version.json
-*.json
+lite_plugin_version.json
