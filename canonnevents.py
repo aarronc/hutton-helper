@@ -38,49 +38,60 @@ class whiteListSetter(threading.Thread):
 
     def __init__(self,cmdr, is_beta, system, station, entry, state,x,y,z,body,lat,lon,client):
         threading.Thread.__init__(self)
-        self.cmdr=quote_plus(cmdr.encode('utf8'))
-        self.system=quote_plus(system.encode('utf8'))
-        if is_beta:
-            self.is_beta='Y'
-        else:
-            self.is_beta='N'
+        self.cmdr=cmdr
+        self.system=system
+        self.is_beta=is_beta
         self.station=station
         self.body=body
-        self.entry=entry.copy()
+        self.entry=entry
         self.state=state
         self.x=x
         self.y=y
         self.z=z
-        self.lat=lat
-        self.lon=lon
+        self.lat=state.get("Latitude")
+        self.lon=state.get("Longitude") 
         self.client=client
+        self.odyssey=state.get("Odyssey")
 
     def run(self):
-
-        url="https://us-central1-canonn-api-236217.cloudfunctions.net/submitRaw?"
-        url=url+"&cmdrName={}".format(self.cmdr)
-        url=url+"&systemName={}".format(self.system)
-        #url=url+"&bodyName={}".format(self.body)
-        url=url+"&station={}".format(self.station)
-        url=url+"&event={}".format(self.entry.get("event"))
-        ##url=url+"&x={}".format(self.x)
-        ##url=url+"&y={}".format(self.y)
-        ##url=url+"&z={}".format(self.z)
-        ##url=url+"&lat={}".format(self.lat)
-        ##url=url+"&lon={}".format(self.lon)
-        url=url+"&is_beta={}".format(self.is_beta)
-        url=url+"&raw_event={}".format(quote_plus(json.dumps(self.entry, ensure_ascii=False).encode('utf8')))
-        url=url+"&clientVersion={}".format(self.client)
-
-        r=requests.get(url)
-
+        url="https://us-central1-canonn-api-236217.cloudfunctions.net/postEvent"
+        #url="http://192.168.0.72:8080"
+        
+        data = {
+            "gameState": {
+                "systemName": self.system,
+                "systemCoordinates": [self.x, self.y, self.z],
+                "bodyName": self.body,
+                "station": self.station,
+                "latitude": self.lat,
+                "longitude": self.lon,
+                "clientVersion": self.client,
+                "isBeta": self.is_beta,
+                "platform": "PC",
+                "odyssey": self.odyssey
+            },
+            "rawEvent": self.entry,
+            "eventType": self.entry.get("event"),
+            "cmdrName": self.cmdr
+        }
+        
+        
+        r = requests.post(url, data=json.dumps(data, ensure_ascii=False).encode('utf8'),
+        headers={"content-type": "application/json"})
+        
+        
         if not r.status_code == requests.codes.ok:
             print("whiteListSetter {} ".format(url))
             print(r.status_code)
             #print(r.json())
             results=[]
         else:
-           results=r.json()
+            try:
+                #results=r.json()
+                print(r)
+            except Exception as e:
+                print(e)
+        
 
 
 
@@ -90,6 +101,7 @@ class whiteListSetter(threading.Thread):
 class whiteList(Frame):
 
     whitelist = []
+    systems={}
 
     def __init__(self, parent):
         Frame.__init__(
@@ -113,13 +125,26 @@ class whiteList(Frame):
 
     @classmethod
     def journal_entry(cls,cmdr, is_beta, system, station, entry, state,client):
+        try:
+            #cache the the star positions
+            if entry.get("StarSystem") and entry.get("StarPos"):
+                print("HH caching star")
+                print(entry.get("StarPos"))
+                cls.systems[entry.get("StarSystem")]=entry.get("StarPos")
+            
+            for event in whiteList.whitelist:
 
-        for event in whiteList.whitelist:
-
-            if cls.matchkeys(event.get("definition"),entry):
-                #debug("Match {}".format(entry.get("event")))
-                # we are not getting x,y,z,lat,lon,body from Hutton Helper but to lazy to change teh code all the way down
-                whiteListSetter(cmdr, is_beta, system, station, entry, state,None,None,None,None,None,None,client).start()
+                if cls.matchkeys(event.get("definition"),entry) and system:
+                    if cls.systems.get(system):
+                        print("HH Getting star")
+                        print(cls.systems.get(system))
+                        x,y,z=cls.systems.get(system)
+                    else:
+                        x,y,z=(None,None,None)
+                    print("whiteListSetter")
+                    whiteListSetter(cmdr, is_beta, system, station, entry, state,x,y,z,state.get("Body"),None,None,client).start()
+        except Exception as e:
+            print(e)
 
 
     '''
@@ -128,7 +153,7 @@ class whiteList(Frame):
 
     def fetchData(self):
         whiteListGetter(self.whiteListCallback).start()
-        self.after(1000*60*60,self.fetchData)
+        self.after(1000*60*60*24,self.fetchData)
 
 
     def whiteListCallback(self,data):
