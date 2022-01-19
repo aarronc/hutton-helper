@@ -15,30 +15,9 @@ class CommandPlugin(plugin.HuttonHelperPlugin):
     "Sends commands to the server."
 
     xmit_paths = {
-        'are we there yet': '/huttontimer.json/{cmdr}', # Calls a commanders current Hutton Run Time
-        'allow list reload': '/devallowreload',
-        'auth list reload': '/authlistreload',
-        'best hutton run': '/besthuttonrun.json/{cmdr}',  # safe for testing
-        'black ops add': '/blopsadd',
-        'black ops active': '/silentrunning',
-        'black ops reset': '/normalrunning',
-        'COLBRIEF': '/tldrcol',
-        'coloniaupdate': '/colstate',
-        'exploration start': '/explostart',
-        'explo system': '/explosystem.json/{cmdr}/{system}',
-        'generalupdate': '/dailygeneral',
-        'inf reload': '/devinfreload',
-        'mission close': '/missionreset',
         'mugify' : '/verify',
         'Mugify' : '/verify',
-        'race start': '/racestart',
-        'race end': '/raceend',
-        'recheck system': '/recheckinfluence',
-        'recruit': '/squadronrecruit',
         'reset exploration data': '/exploreset',  # vaguely safe for testing
-        'stateupdate': '/state',
-        'tick update': '/tickupdate',
-        'TLDR': '/tldr'
     }
 
     status_formats = {
