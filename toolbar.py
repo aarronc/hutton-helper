@@ -16,7 +16,9 @@ import webbrowser
 import xmit
 
 RADIO_URL = "https://radio.forthemug.com/"
-STATS_URL = "https://hot.forthemug.com/stats.php"
+STATS_URL = "https://hot.forthemug.com/stats"
+BASE_URL = "https://hot.forthemug.com/"
+INF_URL = "https://hot.forthemug.com/factions/349"
 
 
 def open_trucker_browser(url):
@@ -33,8 +35,8 @@ class HuttonToolbar(tk.Frame):
         tk.Frame.__init__(self, parent)
 
         BUTTONS = [
-            ("Daily Update", self.daily_info_call),
-            ("Influence", self.influence_data_call),
+            ("Website", lambda: open_trucker_browser(BASE_URL)),
+            ("Influence", lambda: open_trucker_browser(INF_URL)),
             ("Stats", lambda: open_trucker_browser(STATS_URL)),
             ("Radio", lambda: open_trucker_browser(RADIO_URL))
         ]
