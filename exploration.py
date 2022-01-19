@@ -64,7 +64,7 @@ class ExplorationPlugin(plugin.HuttonHelperPlugin):
 
         self.textvariable = tk.StringVar()
         self.textvariable.set("(Waiting...)")
-        ttk.Label(frame, text="UNSOLD exploration credits:", anchor=tk.NW).grid(row=0, column=0, sticky=tk.NW)
+        ttk.Label(frame, text="Est. Exploration Value:", anchor=tk.NW).grid(row=0, column=0, sticky=tk.NW)
         ttk.Label(frame, textvariable=self.textvariable, anchor=tk.NE).grid(row=0, column=1, sticky=tk.NE)
 
         enabled = self.helper.prefs.setdefault(CFG_SHOW_EXPLORATION, False)
@@ -153,7 +153,7 @@ class ExplorationPlugin(plugin.HuttonHelperPlugin):
             self.credits = float(json_data['ExploCredits'])
 
             if self.textvariable:
-                self.textvariable.set("at least {:,.0f}".format(self.credits))
+                self.textvariable.set("~ {:,.0f} Cr".format(self.credits))
 
             self.fails = 0
             self.refresh()
