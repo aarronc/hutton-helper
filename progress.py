@@ -97,7 +97,7 @@ class ProgressDisplay(tk.Frame):
     def __create_headings(self):
         "Create labels for the headings."
 
-        yield tk.Label(self, text="Progress:", anchor=tk.W)
+        yield tk.Label(self, text="(Updated every 10 mins):", anchor=tk.W)
         for when in COLUMNS:
             yield tk.Label(self, text=capitalise(when), anchor=tk.E)
 
