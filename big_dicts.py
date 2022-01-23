@@ -2,6 +2,7 @@
 big_dicts
 
 just a place to store large lookup tables etc
+"""
 
 # Needs extra work new landable events etc
 EVENT_STATUS_FORMATS = {
