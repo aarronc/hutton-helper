@@ -25,58 +25,7 @@ def merge_dicts(*dict_args):
 class ForTheMugPlugin(plugin.HuttonHelperPlugin):
     "Forwards data to the Hutton Helper Server."
 
-    event_paths = {
-    "Bounty": "/bounty",
-    "Cargo": "/cargo",
-    "CargoDepot": "/cargodepot",
-    "CarrierJump": "/carrierjump",
-    "CollectCargo": "/cargocollection",
-    "CommitCrime": "/commitcrime",
-    "CommunityGoal": "/communitygoal",
-    "Died": "/death",
-    "Docked": "/dockedinfoupdate",
-    "DockingRequested": "/dockingrequested",
-    "DockingGranted": "/dockinggranted",
-    "EjectCargo": "/ejectcargo",
-    "EscapeInterdiction" : "/escapeinterdiction",
-    "FactionKillBond": "/factionkillbond",
-    "Friends" : "/friends",
-    "FSDJump": "/fsdjump",
-    "FSSAllBodiesFound": "/fssallbodiesfound",
-    "FSSSignalDiscovered": "/fsssignaldiscovered",
-    "Interdicted" : "/interdicted",
-    "Interdiction" : "/interdiction",
-    "LaunchDrone" : "/launchdrone",
-    "LoadGame": "/loadgame",
-    "Loadout": "/loadout",
-    "MarketBuy": "/buy",
-    "MarketSell": "/sell",
-    "MiningRefined": "/miningrefined",
-    "MissionAbandoned": "/missioncomplete",
-    "MissionAccepted": "/missiontake",
-    "MissionCompleted": "/missioncomplete",
-    "MissionFailed": "/missioncomplete",
-    "MissionRedirected": "/missionupdate",
-    "MultiSellExplorationData": "/multisellexplorationdata",
-    "NpcCrewPaidWage": "/npccrewpaidwage",
-    "Promotion": "/cmdrpromotion",
-    "ProspectedAsteroid": "/prospectedasteroid",
-    "Rank": "/rank",
-    "ReceiveText": "/receivetext",
-    "SAAScanComplete": "/saascancomplete",
-    "SAASignalsFound": "/saasignalsfound",
-    "Scan": "/scan",
-    "SearchAndRescue": "/searchandrescue",
-    "SellExplorationData": "/explorationdata",
-    "ShipTargeted": "/shiptargeted",
-    "SquadronStartup": "/squadronstartup",
-    "StartJump": "/startjump",
-    "Statistics": "/stats",
-    "SupercruiseEntry": "/supercruiseentry",
-    "SupercruiseExit": "/supercruiseexit",
-    "Undocked": "/undockedinfoupdate",
-    "USSDrop" : "/ussdrop"
-    }
+    from big_dicts import EVENT_PATHS as event_paths
 
     def plugin_start(self):
         "Called once at startup. Try to keep it short..."
@@ -84,7 +33,6 @@ class ForTheMugPlugin(plugin.HuttonHelperPlugin):
 
         if extra_paths is not None:
             self.event_paths = merge_dicts(self.event_paths, extra_paths)
-
 
 
     def journal_entry(self, cmdr, is_beta, system, station, entry, state):

@@ -21,16 +21,11 @@ STATS_URL = "https://hot.forthemug.com/stats"
 RADIO_URL = "https://radio.forthemug.com/"
 PATREON_URL = "https://www.patreon.com/entarius"
 
-FB_URL = "https://www.facebook.com/groups/HuttonOrbital"
-TWITCH_URL = "https://www.twitch.tv/huttonorbitaltruckers"
-DISCORD_URL = "http://bit.ly/HuttonDiscord"
-
-
-HOT_IMAGE = tk.PhotoImage(file=os.path.dirname(os.path.realpath(__file__))+"\icon_hot.gif")
-INF_IMAGE = tk.PhotoImage(file=os.path.dirname(os.path.realpath(__file__))+"\icon_inf.gif")
-STATS_IMAGE = tk.PhotoImage(file=os.path.dirname(os.path.realpath(__file__))+"\icon_stats.gif")
-RADIO_IMAGE = tk.PhotoImage(file=os.path.dirname(os.path.realpath(__file__))+"\icon_radio.gif")
-PATREON_IMAGE = tk.PhotoImage(file=os.path.dirname(os.path.realpath(__file__))+"\icon_patreon.gif")
+HOT_IMAGE = tk.PhotoImage(file=os.path.dirname(os.path.realpath(__file__))+"\images\icon_hot.gif")
+INF_IMAGE = tk.PhotoImage(file=os.path.dirname(os.path.realpath(__file__))+"\images\icon_inf.gif")
+STATS_IMAGE = tk.PhotoImage(file=os.path.dirname(os.path.realpath(__file__))+"\images\icon_stats.gif")
+RADIO_IMAGE = tk.PhotoImage(file=os.path.dirname(os.path.realpath(__file__))+"\images\icon_radio.gif")
+PATREON_IMAGE = tk.PhotoImage(file=os.path.dirname(os.path.realpath(__file__))+"\images\icon_patreon.gif")
 
 
 def open_trucker_browser(url):
@@ -44,6 +39,7 @@ class HuttonToolbar(tk.Frame):
     def __init__(self, parent):
         "Initialise the ``Toolbar``."
         tk.Frame.__init__(self, parent)
+        
         BUTTONS = [
             (HOT_IMAGE, lambda: open_trucker_browser(HOT_URL)),
             (INF_IMAGE, lambda: open_trucker_browser(INF_URL)),
