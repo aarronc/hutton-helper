@@ -12,13 +12,20 @@ except ImportError:
     import tkinter.messagebox as tkMessageBox
 
 import webbrowser
-
+import os
 import xmit
 
-RADIO_URL = "https://radio.forthemug.com/"
-STATS_URL = "https://hot.forthemug.com/stats"
-BASE_URL = "https://hot.forthemug.com/"
+HOT_URL = "https://hot.forthemug.com/"
 INF_URL = "https://hot.forthemug.com/factions/349"
+STATS_URL = "https://hot.forthemug.com/stats"
+RADIO_URL = "https://radio.forthemug.com/"
+PATREON_URL = "https://www.patreon.com/entarius"
+
+HOT_IMAGE = tk.PhotoImage(file=os.path.dirname(os.path.realpath(__file__))+"\images\icon_hot.gif")
+INF_IMAGE = tk.PhotoImage(file=os.path.dirname(os.path.realpath(__file__))+"\images\icon_inf.gif")
+STATS_IMAGE = tk.PhotoImage(file=os.path.dirname(os.path.realpath(__file__))+"\images\icon_stats.gif")
+RADIO_IMAGE = tk.PhotoImage(file=os.path.dirname(os.path.realpath(__file__))+"\images\icon_radio.gif")
+PATREON_IMAGE = tk.PhotoImage(file=os.path.dirname(os.path.realpath(__file__))+"\images\icon_patreon.gif")
 
 
 def open_trucker_browser(url):
@@ -31,19 +38,19 @@ class HuttonToolbar(tk.Frame):
 
     def __init__(self, parent):
         "Initialise the ``Toolbar``."
-
         tk.Frame.__init__(self, parent)
-
+        
         BUTTONS = [
-            ("Website", lambda: open_trucker_browser(BASE_URL)),
-            ("Influence", lambda: open_trucker_browser(INF_URL)),
-            ("Stats", lambda: open_trucker_browser(STATS_URL)),
-            ("Radio", lambda: open_trucker_browser(RADIO_URL))
+            (HOT_IMAGE, lambda: open_trucker_browser(HOT_URL)),
+            (INF_IMAGE, lambda: open_trucker_browser(INF_URL)),
+            (STATS_IMAGE, lambda: open_trucker_browser(STATS_URL)),
+            (RADIO_IMAGE, lambda: open_trucker_browser(RADIO_URL)),
+            (PATREON_IMAGE, lambda: open_trucker_browser(PATREON_URL))
         ]
 
-        for column, (text, command) in enumerate(BUTTONS):
+        for column, (image, command) in enumerate(BUTTONS):
             self.columnconfigure(column, weight=1)
-            tk.Button(self, text=text, command=command).grid(row=0, column=column, padx=5)
+            tk.Button(self, image=image, height=35, width=35, command=command).grid(row=0, column=column, padx=0)
 
     def daily_info_call(self):
         "Get and display the daily update."
