@@ -22,7 +22,8 @@ HH_PLUGIN_DIRECTORY = os.path.dirname(os.path.realpath(__file__))
 HH_CONFIG_FILE = os.path.join(HH_PLUGIN_DIRECTORY, 'hutton.ini')
 
 INCLUDE_EXTENSIONS = set([
-    '.py'
+    '.py',
+    '.gif'
 ])
 
 
