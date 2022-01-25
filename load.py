@@ -173,7 +173,7 @@ def plugin_app(parent):
         url='https://hot.forthemug.com/',
         anchor=anchor,
     ).grid(row=0, column=0, sticky=sticky)
-    this.status = widgets.SelfWrappingLabel(table, anchor=anchor, text="For the Mug!")
+    this.status = widgets.SelfWrappingLabel(table, anchor=anchor, text="For the Mug!", wraplength=50)
     this.status.grid(row=0, column=1, sticky=sticky)
 
     widgets.StyleCaptureLabel(table, anchor=anchor, text="News:").grid(row=1, column=0, sticky=sticky)
