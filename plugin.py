@@ -11,11 +11,13 @@ try:
     import UserDict
     is2 = True # used to check if is python2
 except ImportError:
-    # for python 3
-    from collections import UserDict
-    from collections import MutableMapping as DictMixin
-    from collections import MutableMapping
-    import collections
+    try:
+        # for python 3
+        from collections import MutableMapping as DictMixin
+        import collections
+    except ImportError:
+        # for python 3.10
+        import collections.abc as collections
     is2 = False # used to check if is python2
 
 
