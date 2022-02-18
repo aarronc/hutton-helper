@@ -2,17 +2,24 @@
 Various display widgets.
 """
 
-import collections
 try:
     # for python 2
     import Tkinter as tk
     import ttk
     import tkFont
+    import collections
 except ImportError:
     # for python 3
     import tkinter as tk
     import tkinter.ttk as ttk
     import tkinter.font as tkFont
+    try:
+        # for python 3
+        from collections import Iterable as DictMixin
+        import collections
+    except ImportError:
+        # for python 3.10
+        import collections.abc as collections
 
 from ttkHyperlinkLabel import HyperlinkLabel
 
