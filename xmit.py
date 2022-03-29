@@ -8,7 +8,7 @@ if sys.version_info[0] < 3:
     # for Python2
     is2 = True # used to check if is python2
 else:
-    # for python 3
+    # for python 3.1
     import logging
     is2 = False  # used to check if is python2
 
