@@ -556,6 +556,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
     entry['hhstationname'] = station
     entry['hhsystemname'] = system
     entry['huttonappversion'] = HH_VERSION
+    entry['gameversion'] = state['GameVersion']
     
     if isinstance(appversion, str):
         entry['edmcversion'] = appversion
