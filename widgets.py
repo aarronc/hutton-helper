@@ -55,14 +55,14 @@ class FrontCover(ttk.Label):
 
         ttk.Label.__init__(self, frame, text=text, anchor=tk.CENTER, font=large_friendly_letters())
 
-    def configure(self, **kwargs):
+    def configure(self, *args, **kwargs):
         "Reconfigure the ``FrontCover``. Called by EDMC when applying the theme."
 
         font = kwargs.get('font')
         if font is not None:
             kwargs['font'] = large_friendly_letters(font)
 
-        ttk.Label.configure(self, **kwargs)
+        ttk.Label.configure(self,  *args, **kwargs)
 
 
 class StyleCaptureLabel(ttk.Label):
