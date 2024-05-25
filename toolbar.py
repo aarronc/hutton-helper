@@ -12,8 +12,9 @@ except ImportError:
     import tkinter.messagebox as tkMessageBox
 
 import webbrowser
-import os
+from pathlib import Path
 import xmit
+
 
 HOT_URL = "https://hot.forthemug.com/"
 INF_URL = "https://hot.forthemug.com/factions/349"
@@ -21,11 +22,13 @@ STATS_URL = "https://hot.forthemug.com/stats"
 RADIO_URL = "https://radio.forthemug.com/"
 PATREON_URL = "https://www.patreon.com/entarius"
 
-HOT_IMAGE = tk.PhotoImage(file=os.path.dirname(os.path.realpath(__file__))+"\icon_hot.gif")
-INF_IMAGE = tk.PhotoImage(file=os.path.dirname(os.path.realpath(__file__))+"\icon_inf.gif")
-STATS_IMAGE = tk.PhotoImage(file=os.path.dirname(os.path.realpath(__file__))+"\icon_stats.gif")
-RADIO_IMAGE = tk.PhotoImage(file=os.path.dirname(os.path.realpath(__file__))+"\icon_radio.gif")
-PATREON_IMAGE = tk.PhotoImage(file=os.path.dirname(os.path.realpath(__file__))+"\icon_patreon.gif")
+BASE_DIR = Path(__file__).parent.joinpath("images")
+
+HOT_IMAGE = tk.PhotoImage(file=BASE_DIR / "icon_hot.gif")
+INF_IMAGE = tk.PhotoImage(file=BASE_DIR / "icon_inf.gif")
+STATS_IMAGE = tk.PhotoImage(file=BASE_DIR / "icon_stats.gif")
+RADIO_IMAGE = tk.PhotoImage(file=BASE_DIR / "icon_radio.gif")
+PATREON_IMAGE = tk.PhotoImage(file=BASE_DIR / "icon_patreon.gif")
 
 
 def open_trucker_browser(url):
