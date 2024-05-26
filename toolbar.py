@@ -22,7 +22,7 @@ STATS_URL = "https://hot.forthemug.com/stats"
 RADIO_URL = "https://radio.forthemug.com/"
 PATREON_URL = "https://www.patreon.com/entarius"
 
-BASE_DIR = Path(__file__).parent.joinpath("images")
+BASE_DIR = Path(__file__).parent
 
 HOT_IMAGE = tk.PhotoImage(file=BASE_DIR / "icon_hot.gif")
 INF_IMAGE = tk.PhotoImage(file=BASE_DIR / "icon_inf.gif")
