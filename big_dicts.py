@@ -18,6 +18,8 @@ def csv_to_dict(filename):
 
 # Needs extra work new landable events etc
 # maybe should make this look up from a CSV easier to edit ?
+# removed 'FSDJump': "Jumped into {StarSystem} system in the {StarRegion} Region",
+# to allow BGS Driectives to use the message space
 EVENT_STATUS_FORMATS = {
     'ApproachBody': "Approached {Body}",
     'ApproachSettlement': "Approached {Name}",
@@ -31,7 +33,6 @@ EVENT_STATUS_FORMATS = {
     'DockingGranted': "Docking request granted",
     'DockingTimeout': "Docking Timed out",
     'EscapeInterdiction': "Phew!, that was close {Interdictor} almost got you!",
-    'FSDJump': "Jumped into {StarSystem} system in the {StarRegion} Region",
     'HeatWarning': "Its getting warm in here",
     'LeaveBody': "Leaving Gravitational Well",
     'Liftoff': "We have Liftoff!",
