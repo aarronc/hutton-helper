@@ -432,6 +432,24 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
         totalvalue = entry['TotalEarnings']
         this.status['text'] = "Sold ExplorationData for {:,.0f} credits".format(float(totalvalue))
 
+    # BGS Directives - call faction actions to get BGS instructions on FSDJump
+    elif event == 'FSDJump':
+        sysaddress = entry['SystemAddress']
+        # Fetch the data via POST to pass the client verification
+        # There might be a better way to do this, but the anti-scrape code bins a simple GET
+        json_data = xmit.post(
+            '/faction_actions.json/{}/{}'.format(cmdr, sysaddress), 
+            data=transmit_json, 
+            headers=xmit.COMPRESSED_OCTET_STREAM
+        )
+        #json_data = xmit.get('/faction_actions.json/{}/{}'.format(cmdr, sysaddress))
+        
+        if not json_data:
+            this.status['text'] = "Failed to get instructions."
+        else:
+            # The {} is required to inject the variable into the string
+            instructions = json_data.get('action', 'No actions necessary')
+            this.status['text'] = "BGS Update: {}".format(instructions)
 
 def cmdr_data(data, is_beta):
     "Called shortly after startup with a dump of information from Frontier."
