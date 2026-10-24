@@ -50,10 +50,90 @@ class FrontCover(ttk.Label):
     A big, friendly label.
     """
 
-    def __init__(self, frame, text=DONT_PANIC):
+    def __init__(self, frame, text=DONT_PANIC, popup_enabled=None):
         "Initialise the ``FrontCover``."
 
         ttk.Label.__init__(self, frame, text=text, anchor=tk.CENTER, font=large_friendly_letters())
+        self.popup_enabled = popup_enabled or (lambda: False)
+        self.popup = None
+        self.bind('<Button-1>', self.__show_popup)
+        self.bind('<Enter>', self.__update_cursor)
+        self.bind('<Leave>', lambda _event: self.configure(cursor=''))
+
+    def __update_cursor(self, _event=None):
+        "Show that the front cover is clickable when its popup is enabled."
+
+        self.configure(cursor='hand2' if self.popup_enabled() else '')
+
+    def __show_popup(self, _event=None):
+        "Show a little reassurance when the front cover is clicked."
+
+        if not self.popup_enabled():
+            return
+
+        popup = tk.Toplevel(self)
+        self.popup = popup
+        popup.title(DONT_PANIC)
+        popup.resizable(False, False)
+
+        frame = ttk.Frame(popup, padding=20)
+        frame.grid(sticky=tk.NSEW)
+
+        ttk.Label(
+            frame,
+            text="DON'T PANIC!\n\nThe Hutton Helper is standing by.",
+            justify=tk.CENTER,
+            anchor=tk.CENTER,
+        ).grid(row=0, column=0, padx=10, pady=(0, 15))
+        ttk.Button(frame, text='Close', command=self.close_popup).grid(row=1, column=0)
+
+        popup.protocol('WM_DELETE_WINDOW', self.close_popup)
+        popup.update_idletasks()
+
+        # Tk geometry strings interpret negative coordinates as offsets from
+        # the right/bottom edge, not as positions on monitors left/above the
+        # primary display. Map first, then use Win32's virtual-screen coords.
+        x = self.winfo_rootx() + self.winfo_width() + 10
+        y = self.winfo_rooty()
+        width = popup.winfo_width()
+        height = popup.winfo_height()
+        popup.geometry('{}x{}+0+0'.format(width, height))
+        popup.update()
+
+        try:
+            import ctypes
+            from ctypes import wintypes
+
+            hwnd = int(popup.wm_frame(), 0)
+            set_window_pos = ctypes.windll.user32.SetWindowPos
+            set_window_pos.argtypes = (
+                wintypes.HWND, wintypes.HWND, ctypes.c_int, ctypes.c_int,
+                ctypes.c_int, ctypes.c_int, wintypes.UINT,
+            )
+            set_window_pos.restype = wintypes.BOOL
+            positioned = set_window_pos(
+                wintypes.HWND(hwnd), None, x, y, width, height,
+                0x0010 | 0x0004,
+            )  # SWP_NOACTIVATE | SWP_NOZORDER
+            if not positioned:
+                raise ctypes.WinError()
+        except (AttributeError, OSError, ValueError):
+            # On non-Windows systems, Tk can still place the popup when the
+            # target coordinates are non-negative.
+            popup.geometry('{}x{}+{}+{}'.format(
+                width, height, max(0, x), max(0, y)
+            ))
+        popup.focus_set()
+
+    def close_popup(self):
+        "Close the popup if it is open."
+        popup = self.popup
+        self.popup = None
+        if popup is not None:
+            try:
+                popup.destroy()
+            except tk.TclError:
+                pass
 
     def configure(self, *args, **kwargs):
         "Reconfigure the ``FrontCover``. Called by EDMC when applying the theme."

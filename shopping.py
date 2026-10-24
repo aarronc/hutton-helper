@@ -156,7 +156,7 @@ def _extract_commodity(entry):
     elif 'Name' in entry and 'event' not in entry:  # Cargo event Inventory entry
         return entry['Name'], entry.get('Name_Localised')
 
-    sys.stderr.write("Entry: {}\r\n", entry)
+    sys.stderr.write("Entry: {}\r\n".format(entry))
     raise AssertionError("could not extract commodity details from entry")
 
 
@@ -373,7 +373,8 @@ class ShoppingListPlugin(plugin.HuttonHelperPlugin):
         gridlabel(text="Remaining", anchor=tk.E).grid(row=0, column=1, sticky=tk.EW)
         gridlabel(text="In Cargo", anchor=tk.E).grid(row=0, column=2, sticky=tk.EW)
 
-        normal = ttk.Style().configure('HH.TLabel').get('font', 'TkDefaultFont')
+        style_config = ttk.Style().configure('HH.TLabel')
+        normal = style_config.get('font', 'TkDefaultFont') if style_config else 'TkDefaultFont'
         if isinstance(normal, str):
             normal = tkFont.nametofont('TkDefaultFont')
         complete = normal.copy()

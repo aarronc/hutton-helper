@@ -2,7 +2,7 @@
 Code to pack updates into ZIP files.
 """
 
-from version import HH_VERSION
+from hutton_helper_version import HH_VERSION
 
 try:
     # for Python2

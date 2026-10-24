@@ -60,11 +60,19 @@ class HuttonHelperPreferences(UserDict.DictMixin if is2 else collections.Mutable
         "Get a preference."
 
         value = self.__config.get_str(add_config_prefix(pref))
-        if value is None:
+        if value is None or not str(value).strip():
             raise KeyError(pref)
-        else:
-            self.__prefs.add(pref)  # Surprise!
-        return json.loads(str(value))
+
+        try:
+            decoded = json.loads(str(value))
+        except (TypeError, ValueError):
+            # Treat stale or malformed config as an unset preference. This
+            # lets callers using setdefault() recover with their default and
+            # replace the bad value the next time preferences are saved.
+            raise KeyError(pref)
+
+        self.__prefs.add(pref)  # Surprise!
+        return decoded
 
     def __setitem__(self, pref, value):
         "Set a preference to a JSON serialisable value."
@@ -82,10 +90,10 @@ class HuttonHelperPreferences(UserDict.DictMixin if is2 else collections.Mutable
         self.__config.delete(add_config_prefix(pref))
 
     def __iter__(self):
-        return iter(self.mapping)
+        return iter(self.__prefs.copy())
 
     def __len__(self):
-        return len(self.mapping)
+        return len(self.__prefs)
 
     def keys(self):
         "Return a set of all currently known preferences."

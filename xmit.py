@@ -16,6 +16,12 @@ import os
 import time
 import traceback
 import requests
+try:
+    # for Python2
+    import urlparse
+except ImportError:
+    # for Python3
+    import urllib.parse as urlparse
 
 from config import applongname, appversion, appname
 
@@ -33,18 +39,54 @@ if is2 == False:
         logger_channel.setFormatter(logger_formatter)
         logger.addHandler(logger_channel)
 
-XMIT_URL = 'http://forthemug.com:4567'
+XMIT_URL = 'https://helper.forthemug.com'
+ACTIVE_XMIT_URL = XMIT_URL
 DEFAULT_TIMEOUT = 7
 COMPRESSED_OCTET_STREAM = {'content-type': 'application/octet-stream', 'content-encoding': 'zlib'}
 
 FAILED = False
 
 
-def request(path_or_url, base=XMIT_URL, method='get', parse=True, **kwargs):
+def normalize_base_url(base):
+    "Validate and normalize the Hutton Helper API base URL."
+    if not isinstance(base, str):
+        raise ValueError('The server address must be a URL.')
+    base = base.strip().rstrip('/')
+    try:
+        parsed = urlparse.urlsplit(base)
+        hostname = parsed.hostname
+        parsed.port  # Accessing this also validates the port, if one was supplied.
+    except ValueError:
+        raise ValueError('Enter a valid server URL.')
+    if (
+        parsed.scheme.lower() not in ('http', 'https')
+        or not hostname
+        or '@' in parsed.netloc
+        or parsed.query
+        or parsed.fragment
+    ):
+        raise ValueError('Enter an http:// or https:// server URL without credentials, query, or fragment.')
+    return base
+
+
+def set_base_url(base):
+    "Set the base URL used for relative API paths."
+    global ACTIVE_XMIT_URL
+    ACTIVE_XMIT_URL = normalize_base_url(base)
+    return ACTIVE_XMIT_URL
+
+
+def get_base_url():
+    "Return the active API base URL."
+    return ACTIVE_XMIT_URL
+
+
+def request(path_or_url, base=None, method='get', parse=True, **kwargs):
     """
     GET or POST the JSON at ``path_or_url``.
 
     If ``path_or_url`` starts with ``/``, treat it as a path under ``base``.
+    When ``base`` is omitted, use the configured Hutton Helper API base URL.
     Else, treat it as a full URL.
 
     Returns:
@@ -56,9 +98,15 @@ def request(path_or_url, base=XMIT_URL, method='get', parse=True, **kwargs):
     """
 
     assert isinstance(path_or_url, str)
-    assert isinstance(base, str)
     assert method in ['get', 'post']
     assert isinstance(parse, bool)
+
+    global FAILED
+    FAILED = False
+
+    if base is None:
+        base = ACTIVE_XMIT_URL
+    assert isinstance(base, str)
 
     if path_or_url[:1] == '/':
         url = base + path_or_url
@@ -67,7 +115,6 @@ def request(path_or_url, base=XMIT_URL, method='get', parse=True, **kwargs):
 
     try:
         began = time.time()
-        FAILED = False
         response = getattr(requests, method)(url, timeout=DEFAULT_TIMEOUT, **kwargs)
         delay = (time.time() - began) * 1000
 
@@ -101,6 +148,7 @@ def request(path_or_url, base=XMIT_URL, method='get', parse=True, **kwargs):
         return None
 
     except Exception:
+        FAILED = True
         exc_type, exc_value, exc_traceback = sys.exc_info()
         if is2:
             traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stderr)

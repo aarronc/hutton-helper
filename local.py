@@ -2,7 +2,7 @@
 Treats LOCAL as if it's a command line.
 """
 
-from version import HH_VERSION
+from hutton_helper_version import HH_VERSION
 
 import json
 import zlib
@@ -64,6 +64,7 @@ class CommandPlugin(plugin.HuttonHelperPlugin):
 
                 # Send the event if required, getting json_data back:
                 json_data = None
+                request_failed = False
                 command_xmit_path_format = self.xmit_paths.get(command)
                 if command_xmit_path_format:
                     command_xmit_path = command_xmit_path_format.format(cmdr=cmdr, system=system)
@@ -71,18 +72,27 @@ class CommandPlugin(plugin.HuttonHelperPlugin):
                         json_data = xmit.get(command_xmit_path)
                     else:
                         json_data = xmit.post(command_xmit_path, data=transmit_json, headers=xmit.COMPRESSED_OCTET_STREAM)
+                    request_failed = json_data is None
 
-                if xmit.FAILED:  # naughty global
+                if request_failed:
                     command_status_format = 'Failed to Send {command} Command'
 
                 # Format and display the status text:
-                self.helper.status(command_status_format.format(
-                    # Add variables here that you'd like to use in your status text:
-                    command=command,
-                    system=system,
-                    # We also supply the server's reply:
-                    **(json_data or {})
-                ))
+                try:
+                    status = command_status_format.format(
+                        # Add variables here that you'd like to use in your status text:
+                        command=command,
+                        system=system,
+                        # We also supply the server's reply:
+                        **(json_data or {})
+                    )
+                except (KeyError, TypeError, ValueError):
+                    # Some status templates need values that are only present
+                    # in a server response. Keep the command usable if that
+                    # response is absent or incomplete.
+                    status = 'Sent {command} Command'.format(command=command)
+
+                self.helper.status(status)
 
         # VERY special handling, with NONE of the automatic stuff above:
 
@@ -97,3 +107,26 @@ class CommandPlugin(plugin.HuttonHelperPlugin):
 
             else:
                 self.helper.status("Your best Hutton Run is {}".format(json_data['TravelTime']))
+        
+        elif "tick estimate" in entry['Message']:
+            # Fetch the data via POST to pass the client verification
+            json_data = xmit.post(
+                '/tick_estimate.json', 
+                data=transmit_json, 
+                headers=xmit.COMPRESSED_OCTET_STREAM
+            )
+
+            if not json_data:
+                self.helper.status("Failed to get tick check.")
+            else:
+                # Use the 'tick' key from the dictionary, just like your first draft!
+                # If you aren't sure of the exact key name, we can change this to 
+                # json_data.get('tick', 'Unknown') to prevent future KeyErrors.
+                tick_value = json_data.get('tick', 'not known')
+                
+                # Slice the string to keep only the first 16 characters
+                if len(tick_value) >= 16:
+                    tick_value = tick_value[:16]
+                
+                # The {} is required to inject the variable into the string
+                self.helper.status("The last tick is estimated at: {}".format(tick_value))

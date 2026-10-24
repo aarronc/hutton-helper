@@ -2,7 +2,7 @@
 Update mechanism.
 """
 
-from version import HH_VERSION
+from hutton_helper_version import HH_VERSION
 
 try:
     # for Python2
@@ -38,7 +38,7 @@ from config import applongname, appversion, appname
 HH_TEXT_UPDATE_AVAILABLE = "UPDATE AVAILABLE to version {remote_version}"
 HH_TEXT_UPDATED = "UPDATED. Please restart EDMC."
 HH_TEXT_VERSION_CHECK_FAILED = "Check for upgrade failed."
-HH_VERSION_URL = 'http://hot.forthemug.com/live_plugin_version.json'
+HH_VERSION_URL = 'https://hot.forthemug.com/live_plugin_version.json'
 
 HH_PLUGIN_DIRECTORY = os.path.dirname(os.path.realpath(__file__))
 HH_CONFIG_FILE = os.path.join(HH_PLUGIN_DIRECTORY, 'hutton.ini')

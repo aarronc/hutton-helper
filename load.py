@@ -48,6 +48,7 @@ try:
     # plugins by accident. https://git.io/fAQkf#python-package-plugins
 
     import exploration
+    import display_options
     import forward
     import influence
     import local
@@ -56,6 +57,7 @@ try:
     import plugin as plugin_module
     import progress
     import shopping
+    import server_options
     import toolbar
     import updater
     import widgets
@@ -65,7 +67,7 @@ try:
     import panic
     import data
 
-    from version import HH_VERSION
+    from hutton_helper_version import HH_VERSION
 
 finally:
     del sys.path[0]
@@ -94,6 +96,8 @@ if is2 == False:
 
 def PANIC(description=None):
     "Handle failure."
+
+    exc_type, exc_value, exc_traceback = sys.exc_info()
 
     if is2:
         sys.stderr.write("ERROR: {}\r\n".format(description or ''))
@@ -125,8 +129,13 @@ def plugin_start(plugin_dir):
     "Initialise the Hutton Helper plugin."
 
     this.helper = plugin_module.HuttonHelperHelper(config, _refresh, _status)
+    this.display_options_plugin = display_options.DisplayOptionsPlugin(this.helper)
+    this.server_options_plugin = server_options.ServerOptionsPlugin(this.helper)
+    this.news_plugin = news.NewsPlugin(this.helper)
     this.plugins = [
         # A list of plugins to which we pass events.
+        this.display_options_plugin,
+        this.server_options_plugin,
         updater.UpdatePlugin(this.helper),
         forward.ForTheMugPlugin(this.helper),
         local.CommandPlugin(this.helper),
@@ -135,12 +144,13 @@ def plugin_start(plugin_dir):
         progress.ProgressPlugin(this.helper),
         exploration.ExplorationPlugin(this.helper),
         market.MarketPlugin(this.helper),
+        this.news_plugin,
         # cargo.CargoPlugin(this.helper),
         # pwpevents.PwpEventsPlugin(this.helper),
         panic.PanicPlugin(this.helper),
     ]
 
-    for plugin in plugins:
+    for plugin in this.plugins:
         try:
             plugin.plugin_start()
         except:
@@ -176,8 +186,10 @@ def plugin_app(parent):
     this.status = widgets.SelfWrappingLabel(table, anchor=anchor, text="For the Mug!", wraplength=50)
     this.status.grid(row=0, column=1, sticky=sticky)
 
-    widgets.StyleCaptureLabel(table, anchor=anchor, text="News:").grid(row=1, column=0, sticky=sticky)
-    news.HuttonNews(table).grid(row=1, column=1, sticky=sticky)
+    this.news_label = widgets.StyleCaptureLabel(table, anchor=anchor, text="News:")
+    this.news_label.grid(row=1, column=0, sticky=sticky)
+    this.news_widget = news.HuttonNews(table, this.news_plugin)
+    this.news_widget.grid(row=1, column=1, sticky=sticky)
 
     this.plugin_rows = {}
     this.plugin_frames = {}
@@ -198,7 +210,10 @@ def plugin_app(parent):
 
     # Add the front cover
     this.front_cover_row = row
-    this.front_cover = widgets.FrontCover(frame)
+    panic_plugin = next(
+        plugin for plugin in this.plugins if isinstance(plugin, panic.PanicPlugin)
+    )
+    this.front_cover = widgets.FrontCover(frame, popup_enabled=panic_plugin.popup_enabled)
     _show_front_cover(True)
 
     # Arrange for the front cover to be shown for at least a few seconds
@@ -207,7 +222,9 @@ def plugin_app(parent):
     frame.after_idle(_refresh)
 
     # Add the toolbar
-    toolbar.HuttonToolbar(frame).grid(row=row + 1, pady=pady, sticky=sticky)
+    this.toolbar_row = row + 1
+    this.toolbar_widget = toolbar.HuttonToolbar(frame)
+    this.toolbar_widget.grid(row=this.toolbar_row, pady=pady, sticky=sticky)
 
     # Uncomment the next line to thrash the status line shortly after startup:
     # frame.after(5000, _thrash, EVENT_STATUS_FORMATS.values())
@@ -244,7 +261,27 @@ def _show_front_cover(show=True):
 def _refresh():
     "Hide or unhide plugins based on their ``hidden`` flag."
 
+    if this.display_options_plugin.news_hidden():
+        this.news_label.grid_forget()
+        this.news_widget.grid_forget()
+        this.news_widget.pause()
+    else:
+        this.news_label.grid(row=1, column=0, sticky=tk.EW + tk.N)
+        this.news_widget.grid(row=1, column=1, sticky=tk.EW + tk.N)
+        this.news_widget.resume()
+
+    if this.display_options_plugin.lite_mode_enabled():
+        for plugin_frame in this.plugin_frames.values():
+            plugin_frame.grid_forget()
+        _show_front_cover(False)
+        this.front_cover.close_popup()
+        this.toolbar_widget.grid_forget()
+        return
+
+    this.toolbar_widget.grid(row=this.toolbar_row, pady=5, sticky=tk.EW + tk.N)
+
     if time.time() < this.front_cover_until:
+        _show_front_cover(True)
         return
 
     any_ready = False
@@ -297,7 +334,7 @@ def plugin_prefs(parent, cmdr, is_beta):
     frame.columnconfigure(0, weight=1)
 
     row = 0
-    for plugin in plugins:
+    for plugin in this.plugins:
         try:
             plugin_prefs_frame = plugin.plugin_prefs(frame, cmdr, is_beta)
             if plugin_prefs_frame:
@@ -373,7 +410,13 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
         return xmit.post(path, data=transmit_json, headers=xmit.COMPRESSED_OCTET_STREAM)
 
     if 'StarPos' in entry:
-        entry['StarRegion'] = galaxy_regions.findRegion(entry['StarPos'][0],entry['StarPos'][1],entry['StarPos'][2])
+        if entry.get('StarPos') and isinstance(entry['StarPos'], (list, tuple)) and len(entry['StarPos']) >= 3:
+            try:
+                entry['StarRegion'] = galaxy_regions.findRegion(entry['StarPos'][0], entry['StarPos'][1], entry['StarPos'][2])
+            except Exception:
+                entry['StarRegion'] = None
+        else:
+            entry['StarRegion'] = None
 
     # If we can find an entry in STATUS_FORMATS, fill in the string and display it to the user:
     status_format = EVENT_STATUS_FORMATS.get(event)
@@ -432,11 +475,10 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
         totalvalue = entry['TotalEarnings']
         this.status['text'] = "Sold ExplorationData for {:,.0f} credits".format(float(totalvalue))
 
-    # BGS Directives - call faction actions to get BGS instructions on FSDJump
+    # New system - call faction actions to get BGS instructions on FSDJump
     elif event == 'FSDJump':
         sysaddress = entry['SystemAddress']
         # Fetch the data via POST to pass the client verification
-        # There might be a better way to do this, but the anti-scrape code bins a simple GET
         json_data = xmit.post(
             '/faction_actions.json/{}/{}'.format(cmdr, sysaddress), 
             data=transmit_json, 
