@@ -17,10 +17,10 @@ import xmit
 
 
 HOT_URL = "https://hot.forthemug.com/"
-INF_URL = "https://hot.forthemug.com/factions/349"
-STATS_URL = "https://hot.forthemug.com/stats"
+INF_URL = "https://hot.forthemug.com/hutton_runs.php"
+STATS_URL = "https://hot.forthemug.com/trucker_stats.php"
 RADIO_URL = "https://radio.forthemug.com/"
-PATREON_URL = "https://www.patreon.com/entarius"
+PATREON_URL = "https://patreon.com/DeadMeatGF/"
 
 BASE_DIR = Path(__file__).parent
 
